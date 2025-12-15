@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#0a0a0a"/>
+  <title>Xtreme Academy - Cuentas</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icon-192.png"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <img src="icon-192.png" alt="XT"/>
+      <div class="t">
+        <strong>Xtreme Academy — Cuentas</strong>
+        <span id="activeTemplateLabel">Plantilla: —</span>
+      </div>
+    </div>
+    <div class="nav" role="tablist" aria-label="Secciones">
+      <button data-tab="dashboard" class="active">Resumen</button>
+      <button data-tab="ingresos">Ingresos</button>
+      <button data-tab="gastos">Egresos</button>
+      <button data-tab="cxc">Por cobrar</button>
+      <button data-tab="cxp">Por pagar</button>
+      <button data-tab="inventario">Inventario</button>
+      <button data-tab="plantillas">Plantillas</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="tab">
+    <div class="card">
+      <h2>Resumen del mes</h2>
+      <div class="body">
+        <div class="kpis">
+          <div class="kpi"><div class="l">Ingresos</div><div class="n" id="kpiIngresos">$ 0</div></div>
+          <div class="kpi"><div class="l">Egresos</div><div class="n" id="kpiGastos">$ 0</div></div>
+          <div class="kpi"><div class="l">Balance</div><div class="n" id="kpiBalance">$ 0</div><div class="small" id="kpiHint"></div></div>
+        </div>
+        <div class="row" style="margin-top:12px;">
+          <div>
+            <label>Filtrar por mes</label>
+            <input id="monthFilter" type="month"/>
+          </div>
+          <div>
+            <label>Búsqueda rápida</label>
+            <input id="searchAll" placeholder="Ej: Lucía, CUOTA, UTE..."/>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="exportBackupBtn">Exportar respaldo (JSON)</button>
+          <button class="ghost" id="exportCsvAllBtn">Exportar TODO (CSV ZIP)</button>
+        </div>
+        <p class="small" style="margin-top:10px;">
+          Tip: en iPhone instalá como app desde Safari → Compartir → “Agregar a pantalla de inicio”.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- INGRESOS -->
+  <section id="tab-ingresos" class="tab" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Agregar ingreso</h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Nombre (quien pagó)</label>
+              <input id="inNombre" placeholder="Ej: Lucía Suárez"/>
+            </div>
+            <div>
+              <label>Fecha</label>
+              <input id="inFecha" type="date"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Qué pagó</label>
+              <input id="inConcepto" placeholder="Ej: CUOTA / EXAMEN / UNIFORME"/>
+            </div>
+            <div>
+              <label>Monto</label>
+              <input id="inMonto" type="number" inputmode="decimal" placeholder="0"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Medio de pago</label>
+              <select id="inMedio">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label>Estado</label>
+              <select id="inEstado">
+                <option value="Pagado">Pagado</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Notas</label>
+            <textarea id="inNotas" placeholder="Opcional"></textarea>
+          </div>
+          <div class="actions">
+            <button class="primary" id="addIngresoBtn">Guardar ingreso</button>
+            <button class="ghost" id="clearIngresoBtn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Ingresos
+          <span class="badge" id="ingCount">0</span>
+        </h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Buscar</label>
+              <input id="ingSearch" placeholder="Nombre / concepto..."/>
+            </div>
+            <div>
+              <label>Exportar</label>
+              <button class="ghost" id="exportIngresosCsvBtn" style="width:100%;">CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Nombre</th><th>Concepto</th><th>Monto</th><th>Medio</th><th>Estado</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="ingTbody"></tbody>
+            </table>
+          </div>
+          <p class="small">Sugerencia: usá “Por cobrar” para cargar cuotas pendientes y después marcarlas como pagadas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GASTOS -->
+  <section id="tab-gastos" class="tab" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Agregar egreso</h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Qué pagaste</label>
+              <input id="gaConcepto" placeholder="Ej: UTE / OSE / alquiler"/>
+            </div>
+            <div>
+              <label>Fecha</label>
+              <input id="gaFecha" type="date"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Monto</label>
+              <input id="gaMonto" type="number" inputmode="decimal" placeholder="0"/>
+            </div>
+            <div>
+              <label>Categoría</label>
+              <input id="gaCategoria" placeholder="Ej: Servicios / Materiales"/>
+            </div>
+          </div>
+          <div>
+            <label>Notas</label>
+            <textarea id="gaNotas" placeholder="Opcional"></textarea>
+          </div>
+          <div class="actions">
+            <button class="primary" id="addGastoBtn">Guardar egreso</button>
+            <button class="ghost" id="clearGastoBtn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Egresos
+          <span class="badge" id="gasCount">0</span>
+        </h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Buscar</label>
+              <input id="gasSearch" placeholder="Concepto / categoría..."/>
+            </div>
+            <div>
+              <label>Exportar</label>
+              <button class="ghost" id="exportGastosCsvBtn" style="width:100%;">CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="gasTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CXC -->
+  <section id="tab-cxc" class="tab" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Agregar cuenta por cobrar</h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Alumno / Cliente</label>
+              <input id="cxcnombre" placeholder="Ej: Agustín Marino"/>
+            </div>
+            <div>
+              <label>Vencimiento</label>
+              <input id="cxcvence" type="date"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Concepto</label>
+              <input id="cxcconcepto" placeholder="Ej: CUOTA"/>
+            </div>
+            <div>
+              <label>Monto</label>
+              <input id="cxcmonto" type="number" inputmode="decimal" placeholder="0"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Estado</label>
+              <select id="cxcestado">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Pagado">Pagado</option>
+              </select>
+            </div>
+            <div>
+              <label>Notas</label>
+              <input id="cxcnotas" placeholder="Opcional"/>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="addCxcBtn">Guardar</button>
+            <button class="ghost" id="clearCxcBtn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Cuentas por cobrar
+          <span class="badge" id="cxcCount">0</span>
+        </h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Buscar</label>
+              <input id="cxcSearch" placeholder="Nombre / concepto..."/>
+            </div>
+            <div>
+              <label>Exportar</label>
+              <button class="ghost" id="exportCxcCsvBtn" style="width:100%;">CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vence</th><th>Nombre</th><th>Concepto</th><th>Monto</th><th>Estado</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cxcTbody"></tbody>
+            </table>
+          </div>
+          <p class="small">Botón “Marcar pagado” crea el ingreso automáticamente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CXP -->
+  <section id="tab-cxp" class="tab" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Agregar cuenta por pagar</h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Proveedor / Servicio</label>
+              <input id="cxpproveedor" placeholder="Ej: UTE"/>
+            </div>
+            <div>
+              <label>Vencimiento</label>
+              <input id="cxpvence" type="date"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Concepto</label>
+              <input id="cxpconcepto" placeholder="Ej: Electricidad"/>
+            </div>
+            <div>
+              <label>Monto</label>
+              <input id="cxpmonto" type="number" inputmode="decimal" placeholder="0"/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Estado</label>
+              <select id="cxpestado">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Pagado">Pagado</option>
+              </select>
+            </div>
+            <div>
+              <label>Notas</label>
+              <input id="cxpnotas" placeholder="Opcional"/>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="addCxpBtn">Guardar</button>
+            <button class="ghost" id="clearCxpBtn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Cuentas por pagar
+          <span class="badge" id="cxpCount">0</span>
+        </h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Buscar</label>
+              <input id="cxpSearch" placeholder="Proveedor / concepto..."/>
+            </div>
+            <div>
+              <label>Exportar</label>
+              <button class="ghost" id="exportCxpCsvBtn" style="width:100%;">CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vence</th><th>Proveedor</th><th>Concepto</th><th>Monto</th><th>Estado</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cxpTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INVENTARIO -->
+  <section id="tab-inventario" class="tab" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Agregar / ajustar inventario</h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Categoría</label>
+              <input id="invCategoria" placeholder="Ej: Uniformes / Cinturones"/>
+            </div>
+            <div>
+              <label>Producto</label>
+              <input id="invProducto" placeholder="Ej: Dobok T3"/>
+            </div>
+          </div>
+          <div class="row3">
+            <div>
+              <label>Stock</label>
+              <input id="invStock" type="number" inputmode="numeric" placeholder="0"/>
+            </div>
+            <div>
+              <label>Stock mínimo</label>
+              <input id="invMin" type="number" inputmode="numeric" placeholder="0"/>
+            </div>
+            <div>
+              <label>Costo unitario (opcional)</label>
+              <input id="invCosto" type="number" inputmode="decimal" placeholder="0"/>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="saveInvBtn">Guardar</button>
+            <button class="ghost" id="clearInvBtn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Inventario
+          <span class="badge" id="invCount">0</span>
+        </h2>
+        <div class="body">
+          <div class="row">
+            <div>
+              <label>Buscar</label>
+              <input id="invSearch" placeholder="Categoría / producto..."/>
+            </div>
+            <div>
+              <label>Exportar</label>
+              <button class="ghost" id="exportInvCsvBtn" style="width:100%;">CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Categoría</th><th>Producto</th><th>Stock</th><th>Mínimo</th><th>Costo</th><th>Estado</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="invTbody"></tbody>
+            </table>
+          </div>
+          <p class="small">Te marca “bajo stock” cuando stock &lt;= mínimo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANTILLAS -->
+  <section id="tab-plantillas" class="tab" hidden>
+    <div class="card">
+      <h2>Plantillas (meses)</h2>
+      <div class="body">
+        <p class="small">
+          Cada <strong>plantilla</strong> es como “un mes” (o un período). Podés crear una nueva y copiar la anterior para seguir sin arrancar de cero.
+        </p>
+
+        <div class="row">
+          <div>
+            <label>Nombre de la nueva plantilla</label>
+            <input id="tplName" placeholder="Ej: 2025-12"/>
+          </div>
+          <div>
+            <label>Acción</label>
+            <button class="primary" id="createTplBtn" style="width:100%;">Crear (vacía)</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label>Copiar desde plantilla</label>
+            <select id="tplCloneFrom"></select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="ghost" id="cloneTplBtn" style="width:100%;">Crear copiando</button>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;"/>
+
+        <div class="row">
+          <div>
+            <label>Plantilla activa</label>
+            <select id="tplActive"></select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="ghost danger" id="deleteTplBtn" style="width:100%;">Borrar plantilla activa</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="ghost" id="importBackupBtn">Importar respaldo (JSON)</button>
+        </div>
+
+        <input id="filePicker" type="file" accept="application/json" hidden/>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="small">Datos guardados en el iPhone (sin internet). Hacé respaldos seguido.</div>
+    <div class="small">v1 — Xtreme Academy</div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -660,12 +660,22 @@ function wireActions(){
   $("exportCsvAllBtn").addEventListener("click", exportAllZip);
 
   // ===== ALUMNOS =====
-$("addAlumnoBtn")?.addEventListener("click", addOrUpdateAlumno);
-$("clearAlumnoBtn")?.addEventListener("click", clearAlumnoForm);
-$("alSearch")?.addEventListener("input", renderAlumnos);
-$("alNacimiento")?.addEventListener("change", ()=>{
-  $("alEdad").value = calcAge($("alNacimiento").value);
-});
+const btnAddA = $("addAlumnoBtn");
+if (btnAddA) btnAddA.addEventListener("click", addOrUpdateAlumno);
+
+const btnClrA = $("clearAlumnoBtn");
+if (btnClrA) btnClrA.addEventListener("click", clearAlumnoForm);
+
+const sA = $("alSearch");
+if (sA) sA.addEventListener("input", renderAlumnos);
+
+const nac = $("alNacimiento");
+if (nac) {
+  nac.addEventListener("change", ()=>{
+    const edad = $("alEdad");
+    if (edad) edad.value = calcAge(nac.value);
+  });
+}
   
 }
 

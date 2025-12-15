@@ -658,6 +658,15 @@ function wireActions(){
   $("exportCxpCsvBtn").addEventListener("click", ()=>exportCSV("cxp"));
   $("exportInvCsvBtn").addEventListener("click", ()=>exportCSV("inventario"));
   $("exportCsvAllBtn").addEventListener("click", exportAllZip);
+
+  // ===== ALUMNOS =====
+$("addAlumnoBtn")?.addEventListener("click", addOrUpdateAlumno);
+$("clearAlumnoBtn")?.addEventListener("click", clearAlumnoForm);
+$("alSearch")?.addEventListener("input", renderAlumnos);
+$("alNacimiento")?.addEventListener("change", ()=>{
+  $("alEdad").value = calcAge($("alNacimiento").value);
+});
+  
 }
 
 function upsert(listName, data, editId){

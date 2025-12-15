@@ -71,7 +71,8 @@ function emptyTemplate(name){
     gastos: [],
     cxc: [],
     cxp: [],
-    inventario: []
+    inventario: [],
+    alumnos: []
   };
 }
 

@@ -3,6 +3,13 @@
  *  - Plantillas (meses) con tablas: ingresos, gastos, cxc, cxp, inventario
  */
 const $ = (id)=>document.getElementById(id);
+// 🔎 DEBUG: mostrar errores en pantalla (iPhone friendly)
+window.addEventListener("error", (e) => {
+  alert("JS ERROR: " + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
+});
+window.addEventListener("unhandledrejection", (e) => {
+  alert("PROMISE ERROR: " + (e.reason?.message || e.reason || "unknown"));
+});
 const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(Number(n||0));
 const todayISO = ()=> new Date().toISOString().slice(0,10);
 const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);

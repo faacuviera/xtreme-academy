@@ -80,6 +80,7 @@ function cloneTemplate(fromTpl, name){
   const t = emptyTemplate(name);
   // Carry over inventario + cuentas by default; ingresos/gastos are per month
   t.inventario = (fromTpl.inventario||[]).map(x=>({...x, id: uid()}));
+  t.alumnos = (fromTpl.alumnos||[]).map(a => ({ ...a, id: uid() }));
   t.cxc = (fromTpl.cxc||[]).map(x=>({...x, id: uid()}));
   t.cxp = (fromTpl.cxp||[]).map(x=>({...x, id: uid()}));
   return t;

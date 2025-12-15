@@ -203,6 +203,7 @@ function renderAll(){
   renderCxc();
   renderCxp();
   renderInventario();
+  renderAlumnos();
 }
 
 function renderDashboard(){

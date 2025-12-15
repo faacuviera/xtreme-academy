@@ -446,7 +446,95 @@
 
 <!-- ALUMNOS -->
 <section id="tab-alumnos" class="tab" hidden>
-  ...
+  <div class="grid">
+    <div class="card">
+      <h2>Agregar alumno</h2>
+      <div class="body">
+        <div class="row">
+          <div>
+            <label>Nombre</label>
+            <input id="alNombre" placeholder="Ej: Juan Pérez"/>
+          </div>
+          <div>
+            <label>Fecha de nacimiento</label>
+            <input id="alNacimiento" type="date"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Edad (automática)</label>
+            <input id="alEdad" type="number" readonly/>
+          </div>
+          <div>
+            <label>Número</label>
+            <input id="alNumero" placeholder="Ej: 09xxxxxxx"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Fecha ingreso</label>
+            <input id="alIngreso" type="date"/>
+          </div>
+          <div>
+            <label>Programa</label>
+            <select id="alPrograma">
+              <option value="BASICO">BASICO</option>
+              <option value="BLACK BELT CLUB">BLACK BELT CLUB</option>
+              <option value="LIDER">LIDER</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Cuota</label>
+            <input id="alCuota" type="number" inputmode="decimal" placeholder="0"/>
+          </div>
+          <div>
+            <label>Número ATA</label>
+            <input id="alAta" placeholder="Opcional"/>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="addAlumnoBtn">Guardar alumno</button>
+          <button class="ghost" id="clearAlumnoBtn">Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        Alumnos
+        <span class="badge" id="alCount">0</span>
+      </h2>
+      <div class="body">
+        <div class="row">
+          <div>
+            <label>Buscar</label>
+            <input id="alSearch" placeholder="Nombre / número / ATA..."/>
+          </div>
+          <div>
+            <label>Exportar</label>
+            <button class="ghost" id="exportAlumnosCsvBtn" style="width:100%;">CSV</button>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th><th>Nacimiento</th><th>Edad</th><th>Número</th><th>Ingreso</th><th>Programa</th><th>Cuota</th><th>ATA</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="alTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
   
   <!-- PLANTILLAS -->

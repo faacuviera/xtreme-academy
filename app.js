@@ -840,3 +840,106 @@ async function exportAllZip(){
 
 /* ---------- Start ---------- */
 init();
+
+/* ========= ALUMNOS ========= */
+
+function calcAge(birthISO){
+  if(!birthISO) return "";
+  const b = new Date(birthISO + "T00:00:00");
+  const t = new Date();
+  let age = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
+  return age < 0 ? "" : age;
+}
+
+function renderAlumnos(){
+  if(!$("alTbody")) return;
+
+  const q = $("alSearch").value || "";
+  const rows = (getActive().alumnos || [])
+    .filter(x => textMatch(x, q))
+    .sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+
+  $("alCount").textContent = rows.length;
+  $("alTbody").innerHTML = "";
+
+  rows.forEach(a=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${a.nombre}</td>
+      <td>${a.nacimiento||""}</td>
+      <td>${calcAge(a.nacimiento)}</td>
+      <td>${a.numero||""}</td>
+      <td>${a.ingreso||""}</td>
+      <td>${a.programa}</td>
+      <td>${money(a.cuota||0)}</td>
+      <td>${a.ata||""}</td>
+      <td>
+        <button class="ghost" onclick="editAlumno('${a.id}')">Editar</button>
+        <button class="ghost danger" onclick="deleteAlumno('${a.id}')">Borrar</button>
+      </td>`;
+    $("alTbody").appendChild(tr);
+  });
+}
+
+function addOrUpdateAlumno(){
+  const active = getActive();
+  const id = $("addAlumnoBtn").dataset.editId || uid();
+
+  const alumno = {
+    id,
+    nombre: $("alNombre").value.trim(),
+    nacimiento: $("alNacimiento").value,
+    numero: $("alNumero").value,
+    ingreso: $("alIngreso").value || todayISO(),
+    programa: $("alPrograma").value,
+    cuota: Number($("alCuota").value||0),
+    ata: $("alAta").value
+  };
+
+  if(!alumno.nombre){
+    alert("El nombre es obligatorio");
+    return;
+  }
+
+  const idx = active.alumnos.findIndex(a=>a.id===id);
+  if(idx >= 0) active.alumnos[idx] = alumno;
+  else active.alumnos.push(alumno);
+
+  persistActive();
+  clearAlumnoForm();
+  renderAlumnos();
+}
+
+function editAlumno(id){
+  const a = getActive().alumnos.find(x=>x.id===id);
+  if(!a) return;
+
+  $("alNombre").value = a.nombre;
+  $("alNacimiento").value = a.nacimiento;
+  $("alEdad").value = calcAge(a.nacimiento);
+  $("alNumero").value = a.numero;
+  $("alIngreso").value = a.ingreso;
+  $("alPrograma").value = a.programa;
+  $("alCuota").value = a.cuota;
+  $("alAta").value = a.ata;
+
+  $("addAlumnoBtn").dataset.editId = id;
+  $("addAlumnoBtn").textContent = "Actualizar alumno";
+}
+
+function deleteAlumno(id){
+  if(!confirm("¿Borrar alumno?")) return;
+  const a = getActive();
+  a.alumnos = a.alumnos.filter(x=>x.id!==id);
+  persistActive();
+  renderAlumnos();
+}
+
+function clearAlumnoForm(){
+  ["alNombre","alNacimiento","alEdad","alNumero","alCuota","alAta"].forEach(id=>$(id).value="");
+  $("alIngreso").value = todayISO();
+  $("alPrograma").value = "BASICO";
+  $("addAlumnoBtn").textContent = "Guardar alumno";
+  delete $("addAlumnoBtn").dataset.editId;

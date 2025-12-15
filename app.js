@@ -513,6 +513,7 @@ async function markCxcPaid(id){
 
 /* ---------- Actions / Events ---------- */
 function wireActions(){
+    try {
   // Global filters
   $("monthFilter").addEventListener("change",(e)=>{
     state.filters.month = e.target.value || monthISO();
@@ -676,7 +677,10 @@ if (nac) {
     if (edad) edad.value = calcAge(nac.value);
   });
 }
-  
+    } catch (err) {
+    console.error("wireActions error:", err);
+    alert("Error interno en la app. Revisá consola.");
+  }
 }
 
 function upsert(listName, data, editId){

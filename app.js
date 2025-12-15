@@ -858,9 +858,10 @@ function renderAlumnos(){
   if(!$("alTbody")) return;
 
   const q = $("alSearch").value || "";
-  const rows = (getActive().alumnos || [])
-    .filter(x => textMatch(x, q))
-    .sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+const rows = (getActive().alumnos || [])
+  .filter(x => textMatch(x, q))
+  .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
+
 
   $("alCount").textContent = rows.length;
   $("alTbody").innerHTML = "";

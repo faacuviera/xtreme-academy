@@ -1,4 +1,3 @@
-alert("✅ app.js está cargando");
 /** Xtreme Academy - Cuentas (PWA)
  *  - Guardado local en IndexedDB
  *  - Plantillas (meses) con tablas: ingresos, gastos, cxc, cxp, inventario

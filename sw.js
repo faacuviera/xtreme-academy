@@ -15,6 +15,7 @@ self.addEventListener("activate",(e)=>{
   })());
 });
 self.addEventListener("fetch",(e)=>{
+  if (e.request.mode === "navigate") return;
   const req = e.request;
   e.respondWith((async()=>{
     const cache = await caches.open(CACHE_NAME);

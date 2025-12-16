@@ -45,12 +45,14 @@ function getActive() {
   pagos: [],
   gastos: [],
   asistencia: [],
-  cxc: []           
+  cxc: []            
 };
 
-  xaSave(store);
-  return store[id];
-}
+
+store[id].cxc ??= [];
+
+xaSave(store);
+return store[id];
 
 /* ---------- IndexedDB minimal wrapper ---------- */
 const DB_NAME = "xtremeCuentasDB";

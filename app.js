@@ -375,27 +375,35 @@ function renderGastos(){
 
 function markCxcPaid(id){
   const active = getActive();
-  const cxc = active.cxc.find(c => c.id === id);
-  if (!cxc) return;
 
+  // 1) encontrar la fila
+  const cxc = (active.cxc || []).find(c => c.id === id);
+  if (!cxc) {
+    console.warn("markCxcPaid: no encontré cxc con id", id, active.cxc);
+    return;
+  }
+
+  // 2) marcar pagado (normalizamos)
   cxc.estado = "Pagado";
   cxc.pagadoEn = todayISO();
 
+  // 3) crear ingreso automático
   active.ingresos ??= [];
   active.ingresos.push({
     id: "ing_" + uid(),
     fecha: todayISO(),
     concepto: cxc.concepto || "Cuota",
     nombre: cxc.nombre,
-    monto: cxc.monto,
+    monto: Number(cxc.monto || 0),
     origen: "CXC",
     refId: cxc.id
   });
 
+  // 4) guardar y refrescar
   saveActiveData(active);
   renderCxc();
-  renderIngresos();
-  renderResumen();
+  if (typeof renderIngresos === "function") renderIngresos();
+  if (typeof renderResumen === "function") renderResumen();
 }
 
 
@@ -410,8 +418,9 @@ function renderCxc(){
   tbody.innerHTML="";
   const now = todayISO();
   for(const r of rows){
-    const overdue = r.estado!=="Pagado" && r.vence && r.vence < now;
-    const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
+    const isPaid = String(r.estado || "").toLowerCase() === "pagado";
+const overdue = !isPaid && r.vence && r.vence < now;
+const badgeClass = isPaid ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
     tr.innerHTML = `
       <td>${r.vence||""}</td>

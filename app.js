@@ -1164,10 +1164,13 @@ function editAlumno(id){
 function deleteAlumno(id){
   if(!confirm("¿Borrar alumno?")) return;
   const a = getActive();
-  a.alumnos = a.alumnos.filter(x=>x.id!==id);
+  a.alumnos = a.alumnos.filter(x => x.id !== id);
   persistActive();
   renderAlumnos();
 }
+
+window.deleteAlumno = deleteAlumno;
+
 
 function clearAlumnoForm(){
   ["alNombre","alNacimiento","alEdad","alNumero","alCuota","alAta"]

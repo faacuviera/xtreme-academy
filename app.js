@@ -1017,7 +1017,7 @@ if (idx >= 0) active.alumnos[idx] = alumno;
 else active.alumnos.push(alumno);
 
 addCuotaPendiente(active, alumno);
-saveActiveData(getActive());
+saveActiveData(active);
 
 clearAlumnoForm();
 renderAlumnos();

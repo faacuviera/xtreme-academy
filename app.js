@@ -1135,14 +1135,21 @@ function addOrUpdateAlumno(){
   }
 
  const idx = active.alumnos.findIndex(a => a.id === id);
+// ... donde ya guardás alumno ...
 if (idx >= 0) active.alumnos[idx] = alumno;
 else active.alumnos.push(alumno);
 
 addCuotaPendiente(active, alumno);
+
+console.log("CxC en memoria (active.cxc):", active.cxc?.length, active.cxc);
+
 saveActiveData(active);
+
+console.log("CxC leída desde getActive():", getActive().cxc?.length, getActive().cxc);
 
 clearAlumnoForm();
 renderAlumnos();
+
 }
 
 function editAlumno(id){

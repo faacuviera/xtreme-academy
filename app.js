@@ -625,7 +625,7 @@ function clearInvForm(){
   $("saveInvBtn").textContent="Guardar";
 }
 
-function markCxCPaid(id){
+function markCxcPaid(id){
   const active = getActive();
 
   active.cxc ??= [];

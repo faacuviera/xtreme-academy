@@ -413,6 +413,12 @@ function Paid(id){
 }
 
 function markCxcPaid(id){
+  console.log("ENTRÓ markCxcPaid con id:", id);
+
+  const active = getActive();
+  console.log("active.cxc ids:", (active.cxc||[]).map(x=>x.id));
+
+
   const active = getActive();
 
   active.cxc ??= [];

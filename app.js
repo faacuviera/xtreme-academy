@@ -663,6 +663,38 @@ if (typeof renderResumen === "function") renderResumen();
 }
 window.markCxCPaid = markCxCPaid; 
 
+
+function renderResumen() {
+  const active = getActive?.() || state?.active;
+  if (!active) return;
+
+  const ingresos = (active.ingresos || []).filter(i => (i.estado || "").toLowerCase() === "pagado");
+  const egresos  = (active.egresos  || []).filter(e => (e.estado || "pagado").toLowerCase() === "pagado");
+
+  const totalIngresos = ingresos.reduce((a, i) => a + Number(i.monto || 0), 0);
+  const totalEgresos  = egresos.reduce((a, e) => a + Number(e.monto || 0), 0);
+  const balance = totalIngresos - totalEgresos;
+
+  // Intento de actualizar elementos comunes (si existen)
+  const setMoney = (sel, val) => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = "$ " + val.toLocaleString("es-UY");
+  };
+
+  setMoney("#resIngresos", totalIngresos);
+  setMoney("#resEgresos", totalEgresos);
+  setMoney("#resBalance", balance);
+
+  // Por si tus IDs son otros, también prueba por data-attrs comunes:
+  setMoney('[data-kpi="ingresos"]', totalIngresos);
+  setMoney('[data-kpi="egresos"]', totalEgresos);
+  setMoney('[data-kpi="balance"]', balance);
+}
+
+window.renderResumen = renderResumen;
+
+
+
 /* ---------- Actions / Events ---------- */
 function wireActions(){
     try {

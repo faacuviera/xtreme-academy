@@ -15,6 +15,42 @@ const todayISO = ()=> new Date().toISOString().slice(0,10);
 const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
 const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
 
+// ===== Active data (GLOBAL) =====
+const XA_STORE_KEY = "xa_store_v1";
+const XA_ACTIVE_KEY = "xa_active_v1";
+
+function xaLoad() {
+  try { return JSON.parse(localStorage.getItem(XA_STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function xaSave(store) {
+  localStorage.setItem(XA_STORE_KEY, JSON.stringify(store || {}));
+}
+
+function getActiveId() {
+  return localStorage.getItem(XA_ACTIVE_KEY) || "default";
+}
+
+function setActiveId(id) {
+  localStorage.setItem(XA_ACTIVE_KEY, id);
+}
+
+function getActive() {
+  const store = xaLoad();
+  const id = getActiveId();
+
+  store[id] ??= {
+    alumnos: [],
+    pagos: [],
+    gastos: [],
+    asistencia: []
+  };
+
+  xaSave(store);
+  return store[id];
+}
+
 /* ---------- IndexedDB minimal wrapper ---------- */
 const DB_NAME = "xtremeCuentasDB";
 const DB_VER = 1;

@@ -631,7 +631,8 @@ function markCxCPaid(id){
   const idx = active.cxc.findIndex(c => c.id === id);
   if (idx < 0) return;
 
-  if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
+ if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
+
 
   active.cxc[idx].estado = "Pagado";
   active.cxc[idx].pagadoEn = todayISO();
@@ -650,9 +651,9 @@ function markCxCPaid(id){
   saveActiveData(active);
   state.active = active;
 
-  renderCxc();
+renderCxc();
 renderIngresos();
-if (typeof renderResumen === "function") renderResumen();
+
 }
 
 

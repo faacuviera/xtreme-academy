@@ -1167,21 +1167,37 @@ function deleteAlumno(id){
   const active = getActive?.() || state?.active;
   if (!active) return;
 
-  const targetId = String(id).trim();
+  const alumnoId = String(id).trim();
+  const alumno = (active.alumnos || []).find(a => String(a.id).trim() === alumnoId);
 
-  // 1) encontrar el alumno (para saber su nombre)
-  const alumno = (active.alumnos || []).find(a => String(a.id).trim() === targetId);
+  const nombre = String(alumno?.nombre || "").trim().toLowerCase();
+  const numero = String(alumno?.numero || "").trim();
+  const ata    = String(alumno?.ata || "").trim();
 
-  // 2) borrar alumno
-  active.alumnos = (active.alumnos || []).filter(a => String(a.id).trim() !== targetId);
+  // 1) borrar alumno
+  active.alumnos = (active.alumnos || []).filter(a => String(a.id).trim() !== alumnoId);
 
-  // 3) borrar sus cuentas por cobrar (CxC) asociadas por nombre
-  if (alumno && alumno.nombre) {
-    const nombre = String(alumno.nombre).trim();
-    active.cxc = (active.cxc || []).filter(c => String(c.nombre || "").trim() !== nombre);
-  }
+  // 2) borrar CxC asociadas (probamos varios campos comunes)
+  const before = (active.cxc || []).length;
 
-  // guardar + refrescar
+  active.cxc = (active.cxc || []).filter(c => {
+    const cNombre = String(c.nombre || c.cliente || c.alumno || "").trim().toLowerCase();
+    const cAlumnoId = String(c.alumnoId || c.clienteId || c.refAlumnoId || "").trim();
+    const cNumero = String(c.numero || c.doc || "").trim();
+    const cAta    = String(c.ata || "").trim();
+
+    const matchById = cAlumnoId && cAlumnoId === alumnoId;
+    const matchByNombre = nombre && cNombre === nombre;
+    const matchByNumero = numero && cNumero === numero;
+    const matchByAta = ata && cAta === ata;
+
+    // si matchea por cualquiera → se elimina (o sea, NO se conserva)
+    return !(matchById || matchByNombre || matchByNumero || matchByAta);
+  });
+
+  const after = (active.cxc || []).length;
+  console.log("CxC borradas:", before - after);
+
   saveActiveData(active);
   state.active = active;
 
@@ -1190,6 +1206,7 @@ function deleteAlumno(id){
   if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;
+
 
 
 

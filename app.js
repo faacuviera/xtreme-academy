@@ -373,6 +373,32 @@ function renderGastos(){
   });
 }
 
+function markCxcPaid(id){
+  const active = getActive();
+  const cxc = active.cxc.find(c => c.id === id);
+  if (!cxc) return;
+
+  cxc.estado = "Pagado";
+  cxc.pagadoEn = todayISO();
+
+  active.ingresos ??= [];
+  active.ingresos.push({
+    id: "ing_" + uid(),
+    fecha: todayISO(),
+    concepto: cxc.concepto || "Cuota",
+    nombre: cxc.nombre,
+    monto: cxc.monto,
+    origen: "CXC",
+    refId: cxc.id
+  });
+
+  saveActiveData(active);
+  renderCxc();
+  renderIngresos();
+  renderResumen();
+}
+
+
 function renderCxc(){
   const q = $("cxcSearch").value || "";
   const rows = (getActive().cxc || [])

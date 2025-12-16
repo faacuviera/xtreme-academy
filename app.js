@@ -412,53 +412,6 @@ function Paid(id){
   renderResumen?.();
 }
 
-function markCxcPaid(id){
-  console.log("ENTRÓ markCxcPaid con id:", id);
-
-  const active = getActive();
-  console.log("active.cxc ids:", (active.cxc||[]).map(x=>x.id));
-
-  active.cxc ??= [];
-  const idx = active.cxc.findIndex(c => c.id === id);
-
-  if (idx < 0) {
-    console.warn("markCxcPaid: NO encontré id", id, active.cxc.map(c=>c.id));
-    return;
-  }
-
-  // Cambiar estado
-  active.cxc[idx].estado = "Pagado";
-  active.cxc[idx].pagadoEn = todayISO();
-
-  // Crear pago
- active.ingresos ??= [];
-active.ingresos.push({
-  id: "ing_" + uid(),
-  fecha: todayISO(),
-  concepto: active.cxc[idx].concepto || "Cuota",
-  nombre: active.cxc[idx].nombre,
-  monto: Number(active.cxc[idx].monto || 0),
-  origen: "CXC",
-  refId: active.cxc[idx].id
-});
-
-
- // Guardar correctamente
-saveActiveData(active);
-
-// refrescar el active en memoria
-state.active = active;
-
-// Re-render
-renderCxc();
-renderIngresos();
-renderResumen();
-
-  // ✅ chequeo inmediato
-  console.log("Despues:", getActive().cxc.find(c=>c.id===id)?.estado);
-}
-
-
 
 function renderCxc(){
   const q = $("cxcSearch").value || "";
@@ -671,25 +624,37 @@ function clearInvForm(){
   $("saveInvBtn").textContent="Guardar";
 }
 
-async function markCxcPaid(id){
-  const r=(state.active.cxc||[]).find(x=>x.id===id); if(!r) return;
-  if(!confirm("¿Marcar como pagado y crear ingreso automáticamente?")) return;
-  r.estado="Pagado";
-  // Create ingreso
-  const ingreso = {
-    id: uid(),
-    nombre: r.nombre || "",
+function markCxCPaid(id){
+  const active = getActive();
+
+  active.cxc ??= [];
+  const idx = active.cxc.findIndex(c => c.id === id);
+  if (idx < 0) return;
+
+  if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
+
+  active.cxc[idx].estado = "Pagado";
+  active.cxc[idx].pagadoEn = todayISO();
+
+  active.ingresos ??= [];
+  active.ingresos.push({
+    id: "ing_" + uid(),
     fecha: todayISO(),
-    concepto: r.concepto || "CUOTA",
-    monto: Number(r.monto||0),
-    medio: "Efectivo",
-    estado: "Pagado",
-    notas: "Generado desde CxC"
-  };
-  state.active.ingresos.push(ingreso);
-  await persistActive();
-  renderAll();
+    concepto: active.cxc[idx].concepto || "Cuota",
+    nombre: active.cxc[idx].nombre || "",
+    monto: Number(active.cxc[idx].monto || 0),
+    origen: "CXC",
+    refId: active.cxc[idx].id
+  });
+
+  saveActiveData(active);
+  state.active = active;
+
+  renderCxc();
+  renderIngresos();
+  renderResumen();
 }
+
 
 /* ---------- Actions / Events ---------- */
 function wireActions(){

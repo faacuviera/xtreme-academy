@@ -373,7 +373,7 @@ function renderGastos(){
   });
 }
 
-function markCxcPaid(id){
+function Paid(id){
   const store = xaLoad();
   const aid = getActiveId();
   const active = store[aid];
@@ -412,6 +412,47 @@ function markCxcPaid(id){
   renderResumen?.();
 }
 
+function markCxcPaid(id){
+  const active = getActive();
+
+  active.cxc ??= [];
+  const idx = active.cxc.findIndex(c => c.id === id);
+
+  if (idx < 0) {
+    console.warn("markCxcPaid: NO encontré id", id, active.cxc.map(c=>c.id));
+    return;
+  }
+
+  // Cambiar estado
+  active.cxc[idx].estado = "Pagado";
+  active.cxc[idx].pagadoEn = todayISO();
+
+  // Crear pago
+  active.pagos ??= [];
+  active.pagos.push({
+    id: "pay_" + uid(),
+    fecha: todayISO(),
+    concepto: active.cxc[idx].concepto || "Cuota",
+    nombre: active.cxc[idx].nombre,
+    monto: Number(active.cxc[idx].monto || 0),
+    origen: "CXC",
+    refId: active.cxc[idx].id
+  });
+
+  // Guardar correctamente
+  saveActiveData(active);
+
+  // 🔥 refrescar el active en memoria para que render use lo nuevo
+  state.active = active;
+
+  // Re-render
+  renderCxc();
+  if (typeof renderIngresos === "function") renderIngresos();
+  if (typeof renderResumen === "function") renderResumen();
+
+  // ✅ chequeo inmediato
+  console.log("Despues:", getActive().cxc.find(c=>c.id===id)?.estado);
+}
 
 
 

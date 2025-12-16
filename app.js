@@ -452,7 +452,7 @@ tbody.onclick = (e) => {
 
   if (act === "del") delRow("cxc", id);
   if (act === "edit") loadCxc(id);
-  if (act === "pay") window.markCxcPaid(id);
+  if (act === "pay") window.markCxCPaid(id);
  
 };
 
@@ -625,7 +625,7 @@ function clearInvForm(){
   $("saveInvBtn").textContent="Guardar";
 }
 
-function markCxcPaid(id){
+function markCxCPaid(id){
   const active = getActive();
 
   active.cxc ??= [];
@@ -661,7 +661,7 @@ if (typeof renderResumen === "function") renderResumen();
 
 
 }
-window.markCxcPaid = markCxcPaid; 
+window.markCxCPaid = markCxCPaid; 
 
 /* ---------- Actions / Events ---------- */
 function wireActions(){

@@ -1164,19 +1164,22 @@ function editAlumno(id){
 function deleteAlumno(id){
   if(!confirm("¿Borrar alumno?")) return;
 
-  const active = getActive();
+  const active = getActive?.() || state?.active;
   if (!active) return;
 
-  active.alumnos = (active.alumnos || []).filter(x => x.id !== id);
+  const target = String(id).trim();
+  active.alumnos = (active.alumnos || []).filter(a => String(a.id).trim() !== target);
 
-  // 👇 clave: guardar y fijar active antes de render
+  // guardar + sincronizar
   saveActiveData(active);
   state.active = active;
 
+  // refrescar pantalla
   if (typeof renderAlumnos === "function") renderAlumnos();
   if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;
+
 
 
 

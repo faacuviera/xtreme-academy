@@ -1149,6 +1149,10 @@ const fresh = getActive();
 console.log("CxC leida desde getActive():", (fresh.cxc ? fresh.cxc.length : 0), fresh.cxc);
 
 state.active = active;
+
+const cxcSearch = $("cxcSearch");
+if (cxcSearch) cxcSearch.value = "";
+
 renderCxC();
 if (typeof renderResumen === "function") renderResumen();
 

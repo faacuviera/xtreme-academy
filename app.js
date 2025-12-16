@@ -975,7 +975,7 @@ function addOrUpdateAlumno(){
   if(idx >= 0) active.alumnos[idx] = alumno;
   else active.alumnos.push(alumno);
 
-  persistActive();
+  // persistActive();
   clearAlumnoForm();
   renderAlumnos();
 }

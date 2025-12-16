@@ -694,6 +694,22 @@ function renderResumen() {
 
 window.renderResumen = renderResumen;
 
+function deleteAlumno(id) {
+  const active = getActive?.() || state?.active;
+  if (!active) return;
+
+  if (!confirm("¿Borrar alumno?")) return;
+
+  active.alumnos = (active.alumnos || []).filter(a => a.id !== id);
+
+  saveActiveData(active);
+  state.active = active;
+
+  renderAlumnos();
+  if (typeof renderResumen === "function") renderResumen();
+}
+
+window.deleteAlumno = deleteAlumno;
 
 
 /* ---------- Actions / Events ---------- */

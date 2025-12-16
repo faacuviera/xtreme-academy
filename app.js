@@ -1153,7 +1153,7 @@ state.active = active;
 const cxcSearch = $("cxcSearch");
 if (cxcSearch) cxcSearch.value = "";
 
-renderCxC();
+if (typeof renderCxc === "function") renderCxc();
 if (typeof renderResumen === "function") renderResumen();
 
 clearAlumnoForm();
@@ -1220,7 +1220,7 @@ function deleteAlumno(id){
   state.active = active;
 
   if (typeof renderAlumnos === "function") renderAlumnos();
-  if (typeof renderCxC === "function") renderCxC();
+  if (typeof renderCxc === "function") renderCxc();
   if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;

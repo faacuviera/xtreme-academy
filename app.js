@@ -418,9 +418,6 @@ function markCxcPaid(id){
   const active = getActive();
   console.log("active.cxc ids:", (active.cxc||[]).map(x=>x.id));
 
-
-  const active = getActive();
-
   active.cxc ??= [];
   const idx = active.cxc.findIndex(c => c.id === id);
 
@@ -434,27 +431,28 @@ function markCxcPaid(id){
   active.cxc[idx].pagadoEn = todayISO();
 
   // Crear pago
-  active.pagos ??= [];
-  active.pagos.push({
-    id: "pay_" + uid(),
-    fecha: todayISO(),
-    concepto: active.cxc[idx].concepto || "Cuota",
-    nombre: active.cxc[idx].nombre,
-    monto: Number(active.cxc[idx].monto || 0),
-    origen: "CXC",
-    refId: active.cxc[idx].id
-  });
+ active.ingresos ??= [];
+active.ingresos.push({
+  id: "ing_" + uid(),
+  fecha: todayISO(),
+  concepto: active.cxc[idx].concepto || "Cuota",
+  nombre: active.cxc[idx].nombre,
+  monto: Number(active.cxc[idx].monto || 0),
+  origen: "CXC",
+  refId: active.cxc[idx].id
+});
 
-  // Guardar correctamente
-  saveActiveData(active);
 
-  // 🔥 refrescar el active en memoria para que render use lo nuevo
-  state.active = active;
+ // Guardar correctamente
+saveActiveData(active);
 
-  // Re-render
-  renderCxc();
-  if (typeof renderIngresos === "function") renderIngresos();
-  if (typeof renderResumen === "function") renderResumen();
+// refrescar el active en memoria
+state.active = active;
+
+// Re-render
+renderCxc();
+renderIngresos();
+renderResumen();
 
   // ✅ chequeo inmediato
   console.log("Despues:", getActive().cxc.find(c=>c.id===id)?.estado);

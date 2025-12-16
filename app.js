@@ -656,6 +656,7 @@ function markCxCPaid(id){
 
 renderCxc();
 renderIngresos();
+renderResumen();
 
 }
 

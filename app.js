@@ -80,7 +80,7 @@ function addCuotaPendiente(active, alumno){
     monto: Number(alumno.cuota || 0),
     periodo,
     concepto: "Cuota mensual",
-    estado: "pendiente",
+    estado: "Pendiente",
     createdAt: todayISO()
   });
 }
@@ -375,7 +375,7 @@ function renderGastos(){
 
 function renderCxc(){
   const q = $("cxcSearch").value || "";
-  const rows = (state.active.cxc||[])
+  const rows = (getActive().cxc || [])
     .filter(x=>textMatch(x,q))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 

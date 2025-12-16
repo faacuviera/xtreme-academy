@@ -975,3 +975,4 @@ function clearAlumnoForm(){
   $("alPrograma").value = "BASICO";
   $("addAlumnoBtn").textContent = "Guardar alumno";
   delete $("addAlumnoBtn").dataset.editId;
+}

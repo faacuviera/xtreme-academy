@@ -374,7 +374,6 @@ function renderGastos(){
 }
 
 function markCxcPaid(id){
-  // 1) leer store real
   const store = xaLoad();
   const aid = getActiveId();
   const active = store[aid];
@@ -382,18 +381,14 @@ function markCxcPaid(id){
 
   active.cxc ??= [];
 
-  // 2) encontrar cuota
   const cxc = active.cxc.find(c => c.id === id);
-  if (!cxc) {
-    console.warn("No encontré cxc", id, active.cxc.map(x=>x.id));
-    return;
-  }
+  if (!cxc) return;
 
-  // 3) marcar pagado
+  // marcar pagado
   cxc.estado = "Pagado";
   cxc.pagadoEn = todayISO();
 
-  // 4) crear ingreso (tu app usa pagos, no ingresos)
+  // crear pago
   active.pagos ??= [];
   active.pagos.push({
     id: "pay_" + uid(),
@@ -405,15 +400,18 @@ function markCxcPaid(id){
     refId: cxc.id
   });
 
-  // 5) guardar store real
+  // guardar store
   store[aid] = active;
   xaSave(store);
 
-  // 6) refrescar UI
+  state.active = active;
+
+  // refrescar UI
   renderCxc();
-  if (typeof renderIngresos === "function") renderIngresos();
-  if (typeof renderResumen === "function") renderResumen();
+  renderIngresos?.();
+  renderResumen?.();
 }
+
 
 
 

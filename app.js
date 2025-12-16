@@ -1055,4 +1055,4 @@ function clearAlumnoForm(){
   $("addAlumnoBtn").textContent = "Guardar alumno";
   delete $("addAlumnoBtn").dataset.editId;
 }
-  }
+  

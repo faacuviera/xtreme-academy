@@ -499,10 +499,11 @@ tbody.onclick = (e) => {
 
   console.log("CXC CLICK", act, id);
 
-  if (act === "del")  delRow("cxc", id);
+  if (act === "del") delRow("cxc", id);
   if (act === "edit") loadCxc(id);
-  if (act === "pay") markCxCPaid(id);
+  if (act === "pay") markCxCPaid(id); 
 };
+
 
 
 }

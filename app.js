@@ -452,7 +452,7 @@ tbody.onclick = (e) => {
 
   if (act === "del") delRow("cxc", id);
   if (act === "edit") loadCxc(id);
-  if (act === "pay") markCxcPaid(id);
+  if (act === "pay") window.markCxcPaid(id);
  
 };
 
@@ -657,10 +657,11 @@ function markCxCPaid(id){
 
 renderCxc();
 renderIngresos();
-renderResumen();
+if (typeof renderResumen === "function") renderResumen();
+
 
 }
-
+window.markCxcPaid = markCxcPaid; 
 
 /* ---------- Actions / Events ---------- */
 function wireActions(){

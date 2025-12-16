@@ -1145,10 +1145,16 @@ console.log("CxC en memoria (active.cxc):", active.cxc?.length, active.cxc);
 
 saveActiveData(active);
 
-console.log("CxC leída desde getActive():", getActive().cxc?.length, getActive().cxc);
+const fresh = getActive();
+console.log("CxC leida desde getActive():", (fresh.cxc ? fresh.cxc.length : 0), fresh.cxc);
+
+state.active = active;
+renderCxC();
+if (typeof renderResumen === "function") renderResumen();
 
 clearAlumnoForm();
 renderAlumnos();
+
 
 }
 

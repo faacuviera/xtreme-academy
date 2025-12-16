@@ -651,8 +651,8 @@ function markCxCPaid(id){
   state.active = active;
 
   renderCxc();
-  renderIngresos();
-  renderResumen();
+renderIngresos();
+if (typeof renderResumen === "function") renderResumen();
 }
 
 

@@ -700,16 +700,20 @@ function deleteAlumno(id) {
 
   if (!confirm("¿Borrar alumno?")) return;
 
+  console.log("BORRANDO ALUMNO", id, active.alumnos);
+
   active.alumnos = (active.alumnos || []).filter(a => a.id !== id);
+
+  console.log("RESULTADO", active.alumnos);
 
   saveActiveData(active);
   state.active = active;
 
-  renderAlumnos();
+  if (typeof renderAlumnos === "function") renderAlumnos();
   if (typeof renderResumen === "function") renderResumen();
 }
-
 window.deleteAlumno = deleteAlumno;
+
 
 
 /* ---------- Actions / Events ---------- */

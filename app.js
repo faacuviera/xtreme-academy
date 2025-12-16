@@ -53,6 +53,37 @@ store[id].cxc ??= [];
 
 xaSave(store);
 return store[id];
+}
+
+function ensureCxc(active){
+  if (!Array.isArray(active.cxc)) active.cxc = [];
+}
+
+function addCuotaPendiente(active, alumno){
+  ensureCxc(active);
+
+  const periodo = monthISO();
+
+  const existe = active.cxc.some(c =>
+    c.alumnoId === alumno.id &&
+    c.periodo === periodo &&
+    c.estado === "pendiente"
+  );
+
+  if (existe) return;
+
+  active.cxc.push({
+    id: "cxc_" + uid(),
+    alumnoId: alumno.id,
+    nombre: alumno.nombre,
+    programa: alumno.programa,
+    monto: Number(alumno.cuota || 0),
+    periodo,
+    concepto: "Cuota mensual",
+    estado: "pendiente",
+    createdAt: todayISO()
+  });
+}
 
 /* ---------- IndexedDB minimal wrapper ---------- */
 const DB_NAME = "xtremeCuentasDB";

@@ -452,7 +452,7 @@ tbody.onclick = (e) => {
 
   if (act === "del") delRow("cxc", id);
   if (act === "edit") loadCxc(id);
-  if (act === "pay") markCxCPaid(id); 
+  if (act === "pay") CxCPaid(id); 
 };
 
 
@@ -639,14 +639,17 @@ function markCxCPaid(id){
 
   active.ingresos ??= [];
   active.ingresos.push({
-    id: "ing_" + uid(),
-    fecha: todayISO(),
-    concepto: active.cxc[idx].concepto || "Cuota",
-    nombre: active.cxc[idx].nombre || "",
-    monto: Number(active.cxc[idx].monto || 0),
-    origen: "CXC",
-    refId: active.cxc[idx].id
-  });
+  id: "ing_" + uid(),
+  fecha: todayISO(),
+  concepto: active.cxc[idx].concepto || "Cuota",
+  nombre: active.cxc[idx].nombre || "",
+  monto: Number(active.cxc[idx].monto || 0),
+  medio: "Efectivo",      
+  estado: "Pagado",      
+  origen: "CXC",
+  refId: active.cxc[idx].id
+});
+
 
   saveActiveData(active);
   state.active = active;

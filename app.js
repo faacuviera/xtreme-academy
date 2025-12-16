@@ -426,14 +426,18 @@ function renderCxc(){
       </td>`;
     tbody.appendChild(tr);
   }
-  tbody.querySelectorAll("button").forEach(b=>{
-    b.addEventListener("click", ()=>{
-      const id=b.dataset.id; const act=b.dataset.act;
-      if(act==="del"){ delRow("cxc", id); }
-      if(act==="edit"){ loadCxc(id); }
-      if(act==="pay"){ markCxcPaid(id); }
-    });
+ tbody.querySelectorAll("button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    const id = b.dataset.id;
+    const act = b.dataset.act;
+    if (!act) return;
+
+    if(act==="del") delRow("cxc", id);
+    if(act==="edit") loadCxc(id);
+    if(act==="pay") markCxcPaid(id);
   });
+});
+
 }
 
 function renderCxp(){

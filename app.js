@@ -1162,14 +1162,19 @@ function editAlumno(id){
 }
 
 function deleteAlumno(id){
-  alert("ENTRÓ deleteAlumno: " + id);
   if(!confirm("¿Borrar alumno?")) return;
 
-  const a = getActive();
-  a.alumnos = (a.alumnos || []).filter(x => x.id !== id);
+  const active = getActive();
+  if (!active) return;
 
-  persistActive();
-  renderAlumnos();
+  active.alumnos = (active.alumnos || []).filter(x => x.id !== id);
+
+  // 👇 clave: guardar y fijar active antes de render
+  saveActiveData(active);
+  state.active = active;
+
+  if (typeof renderAlumnos === "function") renderAlumnos();
+  if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;
 

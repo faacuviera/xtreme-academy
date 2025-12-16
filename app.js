@@ -1162,21 +1162,17 @@ function editAlumno(id){
 }
 
 function deleteAlumno(id){
-  console.log("DELETE ALUMNO -> id:", id);
-
+  alert("ENTRÓ deleteAlumno: " + id);
   if(!confirm("¿Borrar alumno?")) return;
 
   const a = getActive();
-  console.log("ANTES alumnos:", a.alumnos?.map(x=>x.id));
-
   a.alumnos = (a.alumnos || []).filter(x => x.id !== id);
-
-  console.log("DESPUÉS alumnos:", a.alumnos?.map(x=>x.id));
 
   persistActive();
   renderAlumnos();
 }
 window.deleteAlumno = deleteAlumno;
+
 
 
 function clearAlumnoForm(){

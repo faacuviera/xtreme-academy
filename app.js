@@ -1016,7 +1016,9 @@ function deleteAlumno(id){
 }
 
 function clearAlumnoForm(){
-  ["alNombre","alNacimiento","alEdad","alNumero","alCuota","alAta"].forEach(id=>$(id).value="");
+  ["alNombre","alNacimiento","alEdad","alNumero","alCuota","alAta"]
+    .forEach(id => $(id).value = "");
+
   $("alIngreso").value = todayISO();
   $("alPrograma").value = "BASICO";
   $("addAlumnoBtn").textContent = "Guardar alumno";

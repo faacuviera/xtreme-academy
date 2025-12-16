@@ -452,7 +452,8 @@ tbody.onclick = (e) => {
 
   if (act === "del") delRow("cxc", id);
   if (act === "edit") loadCxc(id);
-  if (act === "pay") CxCPaid(id); 
+  if (act === "pay") markCxcPaid(id);
+ 
 };
 
 

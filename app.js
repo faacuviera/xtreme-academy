@@ -1162,20 +1162,31 @@ function editAlumno(id){
 }
 
 function deleteAlumno(id){
-  if(!confirm("¿Borrar alumno?")) return;
+  if(!confirm("¿Borrar alumno? Esto también elimina sus cuentas por cobrar.")) return;
 
   const active = getActive?.() || state?.active;
   if (!active) return;
 
-  const target = String(id).trim();
-  active.alumnos = (active.alumnos || []).filter(a => String(a.id).trim() !== target);
+  const targetId = String(id).trim();
 
-  // guardar + sincronizar
+  // 1) encontrar el alumno (para saber su nombre)
+  const alumno = (active.alumnos || []).find(a => String(a.id).trim() === targetId);
+
+  // 2) borrar alumno
+  active.alumnos = (active.alumnos || []).filter(a => String(a.id).trim() !== targetId);
+
+  // 3) borrar sus cuentas por cobrar (CxC) asociadas por nombre
+  if (alumno && alumno.nombre) {
+    const nombre = String(alumno.nombre).trim();
+    active.cxc = (active.cxc || []).filter(c => String(c.nombre || "").trim() !== nombre);
+  }
+
+  // guardar + refrescar
   saveActiveData(active);
   state.active = active;
 
-  // refrescar pantalla
   if (typeof renderAlumnos === "function") renderAlumnos();
+  if (typeof renderCxC === "function") renderCxC();
   if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;

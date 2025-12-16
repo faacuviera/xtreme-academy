@@ -681,9 +681,10 @@ function renderResumen() {
     if (el) el.textContent = "$ " + val.toLocaleString("es-UY");
   };
 
-  setMoney("#resIngresos", totalIngresos);
-  setMoney("#resEgresos", totalEgresos);
-  setMoney("#resBalance", balance);
+  setMoney("#kpiIngresos", totalIngresos);
+  setMoney("#kpiEgresos", totalEgresos);
+  setMoney("#kpiBalance", balance);
+
 
   // Por si tus IDs son otros, también prueba por data-attrs comunes:
   setMoney('[data-kpi="ingresos"]', totalIngresos);

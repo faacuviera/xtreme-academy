@@ -171,6 +171,13 @@ function saveActive(){
   localStorage.setItem("xt_active_template", state.activeTemplateId);
 }
 
+function saveActiveData(active) {
+  const store = xaLoad();
+  const id = getActiveId();
+  store[id] = active;
+  xaSave(store);
+}
+
 function setActiveTemplate(id){
   const t = state.templates.find(x=>x.id===id);
   if(!t) return;
@@ -975,7 +982,7 @@ function addOrUpdateAlumno(){
   if(idx >= 0) active.alumnos[idx] = alumno;
   else active.alumnos.push(alumno);
 
-  // persistActive();
+  saveActiveData(active);
   clearAlumnoForm();
   renderAlumnos();
 }

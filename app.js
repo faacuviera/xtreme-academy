@@ -1012,11 +1012,11 @@ function addOrUpdateAlumno(){
     return;
   }
 
-  const idx = active.alumnos.findIndex(a=>a.id===id);
-  if (idx >= 0) active.alumnos[idx] = alumno;
+ const idx = active.alumnos.findIndex(a => a.id === id);
+if (idx >= 0) active.alumnos[idx] = alumno;
 else active.alumnos.push(alumno);
 
-addCuotaPendiente(active, alumno);   
+addCuotaPendiente(active, alumno); 
 saveActiveData(active);
 
 clearAlumnoForm();

@@ -426,17 +426,20 @@ function renderCxc(){
       </td>`;
     tbody.appendChild(tr);
   }
- tbody.querySelectorAll("button").forEach(b=>{
-  b.addEventListener("click", ()=>{
-    const id = b.dataset.id;
-    const act = b.dataset.act;
-    if (!act) return;
+tbody.onclick = (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
 
-    if(act==="del") delRow("cxc", id);
-    if(act==="edit") loadCxc(id);
-    if(act==="pay") markCxcPaid(id);
-  });
-});
+  const id = btn.dataset.id;
+  const act = btn.dataset.act;
+
+  console.log("CXC CLICK", act, id);
+
+  if (act === "del")  delRow("cxc", id);
+  if (act === "edit") loadCxc(id);
+  if (act === "pay")  markCxcPaid(id);
+};
+
 
 }
 

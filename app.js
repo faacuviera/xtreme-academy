@@ -417,7 +417,7 @@ function renderCxc(){
 const q = ($("cxcSearch").value || "").trim();
 const active = state.active || getActive();
 const rows = (active.cxc || [])
-    .filter(x=>textMatch(x,q))
+    .filter(x => !q || textMatch(q, x))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 
   $("cxcCount").textContent = String(rows.length);

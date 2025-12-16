@@ -41,11 +41,12 @@ function getActive() {
   const id = getActiveId();
 
   store[id] ??= {
-    alumnos: [],
-    pagos: [],
-    gastos: [],
-    asistencia: []
-  };
+  alumnos: [],
+  pagos: [],
+  gastos: [],
+  asistencia: [],
+  cxc: []           
+};
 
   xaSave(store);
   return store[id];

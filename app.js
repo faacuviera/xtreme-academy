@@ -531,6 +531,14 @@ function renderInventario(){
 }
 
 /* ---------- CRUD helpers ---------- */
+function loadStore() {
+  return JSON.parse(localStorage.getItem("xa_store_v1") || "{}");
+}
+
+function saveStore(store) {
+  localStorage.setItem("xa_store_v1", JSON.stringify(store));
+}
+
 async function delRow(listName, id){
   if(!confirm("¿Borrar este registro?")) return;
   state.active[listName] = (state.active[listName]||[]).filter(x=>x.id!==id);
@@ -1140,6 +1148,17 @@ if (idx >= 0) active.alumnos[idx] = alumno;
 else active.alumnos.push(alumno);
 
 addCuotaPendiente(active, alumno);
+
+let store = loadStore();
+store.Cxc = store.Cxc || [];
+
+const ultimaCxc = (active.cxc && active.cxc.length) ? active.cxc[active.cxc.length - 1] : null;
+if (ultimaCxc) {
+  store.Cxc.push(ultimaCxc);
+}
+
+saveStore(store);
+
 
 console.log("CxC en memoria (active.cxc):", active.cxc?.length, active.cxc);
 

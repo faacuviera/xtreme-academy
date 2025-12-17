@@ -451,7 +451,7 @@ function Paid(id){
 
 function rendercxc(){
 const q = ($("cxcSearch").value || "").trim();
-const active = state.active || getActive();
+const active = state.active ?? getActive();
 const rows = (active.cxc || [])
     .filter(x => !q || textMatch(q, x))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));

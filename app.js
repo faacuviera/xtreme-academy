@@ -55,7 +55,7 @@ xaSave(store);
 return store[id];
 }
 
-function ensureCxc(active){
+function ensurecxc(active){
   if (!Array.isArray(active.cxc)) active.cxc = [];
 }
 
@@ -208,9 +208,14 @@ function saveActive(){
 function saveActiveData(active) {
   const store = xaLoad();
   const id = getActiveId();
+
+  // ✅ aseguramos que cxc se guarde siempre
+  active.cxc = active.cxc || [];
+
   store[id] = active;
   xaSave(store);
 }
+
 
 function setActiveTemplate(id){
   const t = state.templates.find(x=>x.id===id);
@@ -284,7 +289,7 @@ function renderAll(){
   renderDashboard();
   renderIngresos();
   renderGastos();
-  renderCxc();
+  rendercxc();
   renderCxp();
   renderInventario();
   renderAlumnos();
@@ -407,13 +412,13 @@ function Paid(id){
   state.active = active;
 
   // refrescar UI
-  renderCxc();
+  rendercxc();
   renderIngresos?.();
   renderResumen?.();
 }
 
 
-function renderCxc(){
+function rendercxc(){
 const q = ($("cxcSearch").value || "").trim();
 const active = state.active || getActive();
 const rows = (active.cxc || [])
@@ -452,7 +457,7 @@ tbody.onclick = (e) => {
   console.log("CXC CLICK", act, id);
 
   if (act === "del") delRow("cxc", id);
-  if (act === "edit") loadCxc(id);
+  if (act === "edit") loadcxc(id);
   if (act === "pay") window.markCxCPaid(id);
  
 };
@@ -590,15 +595,15 @@ function loadCxc(id){
   $("cxcmonto").value=r.monto||"";
   $("cxcestado").value=r.estado||"Pendiente";
   $("cxcnotas").value=r.notas||"";
-  $("addCxcBtn").dataset.editId=id;
-  $("addCxcBtn").textContent="Actualizar";
+  $("addcxcBtn").dataset.editId=id;
+  $("addcxcBtn").textContent="Actualizar";
 }
 function clearCxcForm(){
   ["cxcnombre","cxcconcepto","cxcmonto","cxcnotas"].forEach(id=>$(id).value="");
   $("cxcvence").value=todayISO();
   $("cxcestado").value="Pendiente";
-  delete $("addCxcBtn").dataset.editId;
-  $("addCxcBtn").textContent="Guardar";
+  delete $("addcxcBtn").dataset.editId;
+  $("addcxcBtn").textContent="Guardar";
 }
 function loadCxp(id){
   const r=(state.active.cxp||[]).find(x=>x.id===id); if(!r) return;
@@ -664,7 +669,7 @@ function markCxCPaid(id){
   saveActiveData(active);
   state.active = active;
 
-renderCxc();
+rendercxc();
 renderIngresos();
 if (typeof renderResumen === "function") renderResumen();
 
@@ -741,7 +746,7 @@ function wireActions(){
   // Searches
   $("ingSearch").addEventListener("input", renderIngresos);
   $("gasSearch").addEventListener("input", renderGastos);
-  $("cxcSearch").addEventListener("input", renderCxc);
+  $("cxcSearch").addEventListener("input", rendercxc);
   $("cxpSearch").addEventListener("input", renderCxp);
   $("invSearch").addEventListener("input", renderInventario);
 
@@ -778,9 +783,9 @@ function wireActions(){
   });
   $("clearGastoBtn").addEventListener("click", clearGastoForm);
 
-  $("addCxcBtn").addEventListener("click", async()=>{
+  $("addcxcBtn").addEventListener("click", async()=>{
     const data={
-      id: $("addCxcBtn").dataset.editId || uid(),
+      id: $("addcxcBtn").dataset.editId || uid(),
       nombre: $("cxcnombre").value.trim(),
       vence: $("cxcvence").value || todayISO(),
       concepto: $("cxcconcepto").value.trim() || "CUOTA",
@@ -789,10 +794,10 @@ function wireActions(){
       notas: $("cxcnotas").value.trim()
     };
     if(!data.nombre){ alert("Poné el nombre."); return; }
-    upsert("cxc", data, $("addCxcBtn").dataset.editId);
-    await persistActive(); clearCxcForm(); renderAll();
+    upsert("cxc", data, $("addcxcBtn").dataset.editId);
+    await persistActive(); clearcxcForm(); renderAll();
   });
-  $("clearCxcBtn").addEventListener("click", clearCxcForm);
+  $("clearcxcBtn").addEventListener("click", clearcxcForm);
 
   $("addCxpBtn").addEventListener("click", async()=>{
     const data={
@@ -869,14 +874,14 @@ function wireActions(){
   // CSV exports
   $("exportIngresosCsvBtn").addEventListener("click", ()=>exportCSV("ingresos"));
   $("exportGastosCsvBtn").addEventListener("click", ()=>exportCSV("gastos"));
-  $("exportCxcCsvBtn").addEventListener("click", ()=>exportCSV("cxc"));
+  $("exportcxcCsvBtn").addEventListener("click", ()=>exportCSV("cxc"));
   $("exportCxpCsvBtn").addEventListener("click", ()=>exportCSV("cxp"));
   $("exportInvCsvBtn").addEventListener("click", ()=>exportCSV("inventario"));
   $("exportCsvAllBtn").addEventListener("click", exportAllZip);
 
   // ===== ALUMNOS =====
 const btnAddA = $("addAlumnoBtn");
-if (btnAddA) btnAddA.addEventListener("click", addOrUpdateAlumno);
+if (btnAddA) btnAddA.addEventListener("click", Alumno);
 
 const btnClrA = $("clearAlumnoBtn");
 if (btnClrA) btnClrA.addEventListener("click", clearAlumnoForm);
@@ -1149,16 +1154,6 @@ else active.alumnos.push(alumno);
 
 addCuotaPendiente(active, alumno);
 
-let store = loadStore();
-store.Cxc = store.Cxc || [];
-
-const ultimaCxc = (active.cxc && active.cxc.length) ? active.cxc[active.cxc.length - 1] : null;
-if (ultimaCxc) {
-  store.Cxc.push(ultimaCxc);
-}
-
-saveStore(store);
-
 
 console.log("CxC en memoria (active.cxc):", active.cxc?.length, active.cxc);
 
@@ -1172,7 +1167,7 @@ state.active = active;
 const cxcSearch = $("cxcSearch");
 if (cxcSearch) cxcSearch.value = "";
 
-if (typeof renderCxc === "function") renderCxc();
+if (typeof rendercxc === "function") rendercxc();
 if (typeof renderResumen === "function") renderResumen();
 
 clearAlumnoForm();
@@ -1239,7 +1234,7 @@ function deleteAlumno(id){
   state.active = active;
 
   if (typeof renderAlumnos === "function") renderAlumnos();
-  if (typeof renderCxc === "function") renderCxc();
+  if (typeof rendercxc === "function") rendercxc();
   if (typeof renderResumen === "function") renderResumen();
 }
 window.deleteAlumno = deleteAlumno;

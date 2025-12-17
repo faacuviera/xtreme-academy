@@ -798,9 +798,12 @@ if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
     upsert("cxc", data, $("addcxcBtn").dataset.editId);
     await persistActive(); clearcxcForm(); renderAll();
   });
-  $("clearcxcBtn").addEventListener("click", clearcxcForm);
+ const btnClearCxc = $("clearcxcBtn");
+if (btnClearCxc) btnClearCxc.addEventListener("click", clearcxcForm);
 
-  $("addCxpBtn").addEventListener("click", async()=>{
+const btnAddCxp = $("addCxpBtn");
+if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 
+
     const data={
       id: $("addCxpBtn").dataset.editId || uid(),
       proveedor: $("cxpproveedor").value.trim(),

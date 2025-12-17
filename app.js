@@ -196,6 +196,7 @@ async function init(){
   // Determine active template (stored in localStorage)
   const savedActive = localStorage.getItem("xt_active_template");
 const tpl = state.templates.find(x => x.id === savedActive) || state.templates[state.templates.length - 1];
+
 state.activeTemplateId = tpl.id;
 
 // ✅ cargar datos persistidos para este template (xa_store_v1)
@@ -488,7 +489,7 @@ tbody.onclick = (e) => {
 
   if (act === "del") delRow("cxc", id);
   if (act === "edit") loadcxc(id);
-  if (act === "pay") window.markCxCPaid(id);
+  if (act === "pay") window.markCxcPaid(id);
  
 };
 

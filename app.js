@@ -670,6 +670,8 @@ function clearInvForm(){
   $("saveInvBtn").textContent="Guardar";
 }
 function markCxcPaid(id) {
+  console.log("🔥 markCxcPaid ejecutándose con id:", id);
+
   const active = getActive();
 
   // asegurar arrays
@@ -677,9 +679,15 @@ function markCxcPaid(id) {
   active.ingresos ??= [];
 
   const idx = active.cxc.findIndex(c => c.id === id);
-  if (idx < 0) return;
+  if (idx < 0) {
+    console.warn("❌ No se encontró la CxC con id:", id);
+    return;
+  }
 
-  if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
+  // confirmación CORRECTA
+  const ok = confirm("Marcar como pagado y crear ingreso automáticamente?");
+  console.log("confirm result:", ok);
+  if (!ok) return;
 
   // marcar como pagado
   active.cxc[idx].estado = "Pagado";
@@ -705,6 +713,8 @@ function markCxcPaid(id) {
   if (typeof renderCxc === "function") renderCxc();
   if (typeof renderIngresos === "function") renderIngresos();
   if (typeof renderResumen === "function") renderResumen();
+
+  console.log("✅ CxC marcada como pagada correctamente:", id);
 }
 
 window.markCxcPaid = markCxcPaid;

@@ -876,12 +876,12 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
   $("filePicker").addEventListener("change", importBackup);
 
   // CSV exports
-  $("exportIngresosCsvBtn").addEventListener("click", ()=>exportCSV("ingresos"));
-  $("exportGastosCsvBtn").addEventListener("click", ()=>exportCSV("gastos"));
-  $("exportcxcCsvBtn").addEventListener("click", ()=>exportCSV("cxc"));
-  $("exportCxpCsvBtn").addEventListener("click", ()=>exportCSV("cxp"));
-  $("exportInvCsvBtn").addEventListener("click", ()=>exportCSV("inventario"));
-  $("exportCsvAllBtn").addEventListener("click", exportAllZip);
+  const b1 = $("exportIngresosCsvBtn"); if (b1) b1.addEventListener("click", () => exportCSV("ingresos"));
+const b2 = $("exportGastosCsvBtn");   if (b2) b2.addEventListener("click", () => exportCSV("gastos"));
+const b3 = $("exportCxcCsvBtn");      if (b3) b3.addEventListener("click", () => exportCSV("cxc"));
+const b4 = $("exportCxpCsvBtn");      if (b4) b4.addEventListener("click", () => exportCSV("cxp"));
+const b5 = $("exportInvCsvBtn");      if (b5) b5.addEventListener("click", () => exportCSV("inventario"));
+const b6 = $("exportCsvAllBtn");      if (b6) b6.addEventListener("click", exportAllZip);
 
   // ===== ALUMNOS =====
 const btnAddA = $("addAlumnoBtn");

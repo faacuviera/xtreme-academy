@@ -710,9 +710,8 @@ function markCxcPaid(id) {
   saveActiveData(active);
   state.active = active;
 
-  if (typeof renderCxc === "function") renderCxc();
-  if (typeof renderIngresos === "function") renderIngresos();
-  if (typeof renderResumen === "function") renderResumen();
+  // refrescar todo
+renderAll();
 
   console.log("✅ CxC marcada como pagada correctamente:", id);
 }

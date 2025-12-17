@@ -885,7 +885,7 @@ const b6 = $("exportCsvAllBtn");      if (b6) b6.addEventListener("click", expor
 
   // ===== ALUMNOS =====
 const btnAddA = $("addAlumnoBtn");
-if (btnAddA) btnAddA.addEventListener("click", Alumno);
+if (btnAddA) btnAddA.addEventListener("click", addOrUpdateAlumno);
 
 const btnClrA = $("clearAlumnoBtn");
 if (btnClrA) btnClrA.addEventListener("click", clearAlumnoForm);

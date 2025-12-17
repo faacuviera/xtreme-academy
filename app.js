@@ -575,12 +575,21 @@ function saveStore(store) {
   localStorage.setItem("xa_store_v1", JSON.stringify(store));
 }
 
-async function delRow(listName, id){
-  if(!confirm("¿Borrar este registro?")) return;
-  state.active[listName] = (state.active[listName]||[]).filter(x=>x.id!==id);
-  await persistActive();
+async function delRow(listName, id) {
+  if (!confirm("¿Borrar este registro?")) return;
+
+  const active = getActive();
+  active[listName] ??= [];
+
+  // borrar por id
+  active[listName] = active[listName].filter(x => x.id !== id);
+
+  // guardar y refrescar UI (esto recalcula el resumen)
+  saveActiveData(active);
+  state.active = active;
   renderAll();
 }
+
 
 function loadIngreso(id){
   const r=(state.active.ingresos||[]).find(x=>x.id===id); if(!r) return;

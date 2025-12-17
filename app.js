@@ -183,9 +183,19 @@ async function init(){
 
   // Determine active template (stored in localStorage)
   const savedActive = localStorage.getItem("xt_active_template");
-  const active = state.templates.find(t=>t.id===savedActive) || state.templates[state.templates.length-1];
-  state.activeTemplateId = active.id;
-  state.active = active;
+  const tpl = state.templates.find(x => x.id === savedActiveId) || state.templates[state.templates.length - 1];
+state.activeTemplateId = tpl.id;
+
+// ✅ cargar datos persistidos para este template (xa_store_v1)
+state.active = getActive();
+
+// asegurar arrays por las dudas
+state.active.cxc ??= [];
+state.active.ingresos ??= [];
+state.active.gastos ??= [];
+state.active.pagos ??= [];
+state.active.asistencia ??= [];
+state.active.alumnos ??= [];
 
   // UI wiring
   wireTabs();
@@ -638,44 +648,46 @@ function clearInvForm(){
   delete $("saveInvBtn").dataset.editId;
   $("saveInvBtn").textContent="Guardar";
 }
-
-function markCxCPaid(id){
+function markCxcPaid(id) {
   const active = getActive();
 
+  // asegurar arrays
   active.cxc ??= [];
+  active.ingresos ??= [];
+
   const idx = active.cxc.findIndex(c => c.id === id);
   if (idx < 0) return;
 
- if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
+  if (!confirm("Marcar como pagado y crear ingreso automáticamente?")) return;
 
-
+  // marcar como pagado
   active.cxc[idx].estado = "Pagado";
   active.cxc[idx].pagadoEn = todayISO();
 
-  active.ingresos ??= [];
+  // crear ingreso automático
   active.ingresos.push({
-  id: "ing_" + uid(),
-  fecha: todayISO(),
-  concepto: active.cxc[idx].concepto || "Cuota",
-  nombre: active.cxc[idx].nombre || "",
-  monto: Number(active.cxc[idx].monto || 0),
-  medio: "Efectivo",      
-  estado: "Pagado",      
-  origen: "CXC",
-  refId: active.cxc[idx].id
-});
+    id: "ing_" + uid(),
+    fecha: todayISO(),
+    concepto: active.cxc[idx].concepto || "Cuota",
+    nombre: active.cxc[idx].nombre || "",
+    monto: Number(active.cxc[idx].monto || 0),
+    medio: "Efectivo",
+    estado: "Pagado",
+    origen: "CXC",
+    refId: active.cxc[idx].id
+  });
 
-
+  // persistir y refrescar UI
   saveActiveData(active);
   state.active = active;
 
-rendercxc();
-renderIngresos();
-if (typeof renderResumen === "function") renderResumen();
-
-
+  if (typeof renderCxc === "function") renderCxc();
+  if (typeof renderIngresos === "function") renderIngresos();
+  if (typeof renderResumen === "function") renderResumen();
 }
-window.markCxCPaid = markCxCPaid; 
+
+window.markCxcPaid = markCxcPaid;
+
 
 
 function renderResumen() {

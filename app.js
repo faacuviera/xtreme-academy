@@ -783,7 +783,8 @@ function wireActions(){
   });
   $("clearGastoBtn").addEventListener("click", clearGastoForm);
 
-  $("addcxcBtn").addEventListener("click", async()=>{
+  const btnAddCxc = $("addcxcBtn");
+if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
     const data={
       id: $("addcxcBtn").dataset.editId || uid(),
       nombre: $("cxcnombre").value.trim(),

@@ -41,18 +41,30 @@ function getActive() {
   const id = getActiveId();
 
   store[id] ??= {
-  alumnos: [],
-  pagos: [],
-  gastos: [],
-  asistencia: [],
-  cxc: []            
-};
+    alumnos: [],
+    ingresos: [],
+    gastos: [],
+    pagos: [],
+    asistencia: [],
+    cxc: []
+  };
 
+  // 🔥 MIGRACIÓN: datos viejos con Cxc → cxc
+  if (store[id].Cxc && !store[id].cxc) {
+    store[id].cxc = store[id].Cxc;
+    delete store[id].Cxc;
+  }
 
-store[id].cxc ??= [];
+  // asegurar arrays
+  store[id].cxc ??= [];
+  store[id].ingresos ??= [];
+  store[id].gastos ??= [];
+  store[id].pagos ??= [];
+  store[id].asistencia ??= [];
+  store[id].alumnos ??= [];
 
-xaSave(store);
-return store[id];
+  xaSave(store);
+  return store[id];
 }
 
 function ensurecxc(active){
@@ -293,6 +305,14 @@ function toCSV(rows, headers){
 
 /* ---------- Rendering ---------- */
 function renderAll(){
+  state.active = getActive();
+
+  state.active.cxc ??= [];
+  state.active.ingresos ??= [];
+  state.active.gastos ??= [];
+  state.active.pagos ??= [];
+  state.active.asistencia ??= [];
+  state.active.alumnos ??= [];
   $("activeTemplateLabel").textContent = "Plantilla: " + state.active.name;
   $("monthFilter").value = state.filters.month;
 

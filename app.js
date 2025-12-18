@@ -86,7 +86,7 @@ function addCuotaPendiente(active, alumno) {
 
   active.cxc.push({
     id: "cxc_" + uid(),
-    vence: todayISO(),
+   vence: venceDia10ISO(),
     nombre: alumno.nombre || "",
     concepto: "Cuota mensual",
     monto: Number(alumno.cuota || 0),
@@ -276,6 +276,17 @@ function wireTabs(){
 }
 
 /* ---------- Helpers ---------- */
+function venceDia10ISO() {
+  const tpl = state.templates?.find(t => t.id === state.activeTemplateId);
+  const name = (tpl?.name || "").trim();
+
+  const m = name.match(/(\d{4})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-10`;
+
+  const today = todayISO();
+  return `${today.slice(0, 7)}-10`;
+}
+
 function persistActive(){
   state.active.updatedAt=Date.now();
   return dbPut("templates", state.active).then(async()=>{

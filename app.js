@@ -199,6 +199,12 @@ const tpl = state.templates.find(x => x.id === savedActive) || state.templates[s
 
 state.activeTemplateId = tpl.id;
 
+// después de elegir tpl:
+state.activeTemplateId = tpl.id;
+
+// ✅ IMPORTANTÍSIMO: que el store activo sea el ID de la plantilla
+setActiveId(tpl.id);
+  
 // ✅ cargar datos persistidos para este template (xa_store_v1)
 state.active = getActive();
 
@@ -243,9 +249,16 @@ function saveActiveData(active) {
 function setActiveTemplate(id){
   const t = state.templates.find(x=>x.id===id);
   if(!t) return;
-  state.activeTemplateId=id;
-  state.active=t;
-  saveActive();
+
+  state.activeTemplateId = id;
+
+  // ✅ cambia el "store" activo a esta plantilla
+  setActiveId(id);
+
+  // ✅ carga datos de esa plantilla
+  state.active = getActive();
+
+  saveActive(); // esto guarda xt_active_template (selector)
   renderAll();
 }
 
@@ -896,18 +909,50 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
     $("tplName").value="";
     refreshTemplateSelectors();
   });
-  $("cloneTplBtn").addEventListener("click", async()=>{
-    const fromId = $("tplCloneFrom").value;
-    const base = state.templates.find(t=>t.id===fromId);
-    const name = $("tplName").value.trim() || (monthISO()+" (copia)");
-    if(!base){ alert("Elegí una plantilla para copiar."); return; }
-    if(state.templates.some(t=>t.name===name)){ alert("Ya existe ese nombre."); return; }
-    const t=cloneTemplate(base, name);
-    await dbPut("templates", t);
-    state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
-    setActiveTemplate(t.id);
-    $("tplName").value="";
-  });
+  $("cloneTplBtn").addEventListener("click", async () => {
+  const fromId = $("tplCloneFrom").value;
+  const name = $("tplName").value.trim() || monthISO();
+
+  if (!fromId) { alert("Elegí una plantilla para copiar."); return; }
+  if (state.templates.some(t => t.name === name)) { alert("Ya existe ese nombre."); return; }
+
+  // 1) crear nueva plantilla (solo meta) en IndexedDB
+  const newTpl = emptyTemplate(name);
+  await dbPut("templates", newTpl);
+
+  // 2) leer datos reales de la plantilla origen (desde xa_store_v1 usando el ID)
+  setActiveId(fromId);
+  const baseData = getActive();
+
+  // 3) armar data del nuevo mes
+  const monthData = {
+    alumnos: (baseData.alumnos || []).map(a => ({ ...a })),          // copiamos alumnos
+    inventario: (baseData.inventario || []).map(i => ({ ...i })),   // opcional (dejalo si querés)
+    ingresos: [],
+    gastos: [],
+    pagos: [],
+    asistencia: [],
+    cxc: [],
+    cxp: [] // si querés arrancar el mes con cxp vacío, dejalo así
+  };
+
+  // 4) generar CxC nuevas para TODOS los alumnos
+  for (const a of monthData.alumnos) {
+    addCuotaPendiente(monthData, a);
+  }
+
+  // 5) guardar data del nuevo mes en xa_store_v1 bajo el id de la NUEVA plantilla
+  setActiveId(newTpl.id);
+  saveActiveData(monthData);
+
+  // 6) recargar lista de plantillas y activar la nueva
+  state.templates = (await dbGetAll("templates")).sort((a, b) => a.name.localeCompare(b.name));
+  refreshTemplateSelectors();
+  setActiveTemplate(newTpl.id);
+
+  $("tplName").value = "";
+});
+
 
   $("tplActive").addEventListener("change",(e)=>setActiveTemplate(e.target.value));
 

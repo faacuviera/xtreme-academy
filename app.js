@@ -1268,7 +1268,7 @@ function saveAlumno(id) {
   const ingreso    = document.getElementById(`ed_ingreso_${id}`)?.value || "";
   const programa   = document.getElementById(`ed_programa_${id}`)?.value.trim() || "";
   const cuotaStr   = document.getElementById(`ed_cuota_${id}`)?.value || "0";
-  const at         = document.getElementById(`ed_at_${id}`)?.value.trim() || "";
+  const ata         = document.getElementById(`ed_at_${id}`)?.value.trim() || "";
 
   const cuota = Number(cuotaStr);
   if (!nombre) return alert("El nombre no puede quedar vacío.");
@@ -1279,7 +1279,7 @@ function saveAlumno(id) {
 
   active.alumnos = arr.map(a => {
     if (a.id !== id) return a;
-    return { ...a, nombre, nacimiento, numero, ingreso, programa, cuota, at };
+    return { ...a, nombre, nacimiento, numero, ingreso, programa, cuota, ata };
   });
 
   // ⚠️ IMPORTANTE:
@@ -1300,29 +1300,47 @@ function renderAlumnos(){
   if(!$("alTbody")) return;
 
   const q = $("alSearch").value || "";
-const rows = (getActive().alumnos || [])
-  .filter(x => textMatch(x, q))
-  .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
-
+  const rows = (getActive().alumnos || [])
+    .filter(x => textMatch(x, q))
+    .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
   $("alCount").textContent = rows.length;
   $("alTbody").innerHTML = "";
 
   rows.forEach(a=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${a.nombre}</td>
-      <td>${a.nacimiento||""}</td>
-      <td>${calcAge(a.nacimiento)}</td>
-      <td>${a.numero||""}</td>
-      <td>${a.ingreso||""}</td>
-      <td>${a.programa}</td>
-      <td>${money(a.cuota||0)}</td>
-      <td>${a.ata||""}</td>
-      <td>
-        <button class="ghost" onclick="editAlumno('${a.id}')">Editar</button>
-        <button class="ghost danger" onclick="deleteAlumno('${a.id}')">Borrar</button>
-      </td>`;
+    const editing = (editMode.section === "alumnos" && editMode.id === a.id);
+
+    if (!editing) {
+      tr.innerHTML = `
+        <td>${escAttr(a.nombre)}</td>
+        <td>${escAttr(a.nacimiento||"")}</td>
+        <td>${escAttr(calcAge(a.nacimiento))}</td>
+        <td>${escAttr(a.numero||"")}</td>
+        <td>${escAttr(a.ingreso||"")}</td>
+        <td>${escAttr(a.programa||"")}</td>
+        <td>${money(a.cuota||0)}</td>
+        <td>${escAttr(a.ata||"")}</td>
+        <td>
+          <button class="ghost" onclick="editAlumno('${a.id}')">Editar</button>
+          <button class="ghost danger" onclick="deleteAlumno('${a.id}')">Borrar</button>
+        </td>`;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_nombre_${a.id}" value="${escAttr(a.nombre)}" /></td>
+        <td><input id="ed_nacimiento_${a.id}" type="date" value="${escAttr(a.nacimiento||"")}" /></td>
+        <td>${escAttr(calcAge(a.nacimiento))}</td>
+        <td><input id="ed_numero_${a.id}" value="${escAttr(a.numero||"")}" /></td>
+        <td><input id="ed_ingreso_${a.id}" type="date" value="${escAttr(a.ingreso||"")}" /></td>
+        <td><input id="ed_programa_${a.id}" value="${escAttr(a.programa||"")}" /></td>
+        <td><input id="ed_cuota_${a.id}" type="number" min="0" step="1" value="${escAttr(a.cuota ?? 0)}" /></td>
+        <td><input id="ed_at_${a.id}" value="${escAttr(a.ata||"")}" /></td>
+        <td>
+          <button class="ghost" onclick="saveAlumno('${a.id}')">Guardar</button>
+          <button class="ghost" onclick="cancelEdit()">Cancelar</button>
+        </td>`;
+    }
+
     $("alTbody").appendChild(tr);
   });
 }

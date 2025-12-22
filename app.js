@@ -355,6 +355,15 @@ function toCSV(rows, headers){
 }
 
 /* ---------- Rendering ---------- */
+function render(){
+  // llamá a los renders que correspondan
+  renderAlumnos?.();
+  rendercxc?.();
+  renderIngresos?.();
+  renderEgresos?.();
+  renderResumen?.();
+}
+
 function renderAll(){
   state.active = getActive();
 

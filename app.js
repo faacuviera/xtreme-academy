@@ -741,6 +741,9 @@ function clearGastoForm(){
   $("addGastoBtn").textContent="Guardar egreso";
 }
 function loadCxc(id){
+  window.loadcxc = (id) => editCxc(id);
+window.loadCxc = (id) => editCxc(id);
+
   const r=(state.active.cxc||[]).find(x=>x.id===id); if(!r) return;
   $("cxcnombre").value=r.nombre||"";
   $("cxcvence").value=r.vence||todayISO();

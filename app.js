@@ -498,54 +498,117 @@ function Paid(id){
   renderResumen?.();
 }
 
+function editCxc(id) {
+  startEdit("cxc", id);
+}
+
+function saveCxc(id) {
+  const vence    = document.getElementById(`ed_cxc_vence_${id}`)?.value || "";
+  const nombre   = document.getElementById(`ed_cxc_nombre_${id}`)?.value.trim() || "";
+  const concepto = document.getElementById(`ed_cxc_concepto_${id}`)?.value.trim() || "";
+  const montoStr = document.getElementById(`ed_cxc_monto_${id}`)?.value || "0";
+  const estado   = document.getElementById(`ed_cxc_estado_${id}`)?.value || "";
+
+  const monto = Number(montoStr);
+  if (!nombre) return alert("El nombre no puede quedar vacío.");
+  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+
+  const active = getActive();
+  const arr = active.cxc || [];
+
+  active.cxc = arr.map(r => {
+    if (r.id !== id) return r;
+    return { ...r, vence, nombre, concepto, monto, estado };
+  });
+
+  setActive(active);
+  editMode = { section: null, id: null };
+  render();
+}
+
+window.editCxc = editCxc;
+window.saveCxc = saveCxc;
 
 function rendercxc(){
-const q = ($("cxcSearch").value || "").trim();
-const active = state.active ?? getActive();
-const rows = (active.cxc || [])
+  const q = ($("cxcSearch").value || "").trim();
+  const active = state.active ?? getActive();
+
+  const rows = (active.cxc || [])
     .filter(x => !q || textMatch(q, x))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 
   $("cxcCount").textContent = String(rows.length);
+
   const tbody = $("cxcTbody");
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
+
   const now = todayISO();
+
   for(const r of rows){
     const isPaid = String(r.estado || "").toLowerCase() === "pagado";
-const overdue = !isPaid && r.vence && r.vence < now;
-const badgeClass = isPaid ? "ok" : (overdue ? "due" : "");
-    const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.vence||""}</td>
-      <td>${r.nombre||""}</td>
-      <td>${r.concepto||""}</td>
-      <td>${money(r.monto||0)}</td>
-      <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
-      <td>
-        ${r.estado!=="Pagado" ? `<button class="ghost" data-act="pay" data-id="${r.id}">Marcar pagado</button>` : ""}
-        <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
-      </td>`;
+    const overdue = !isPaid && r.vence && r.vence < now;
+    const badgeClass = isPaid ? "ok" : (overdue ? "due" : "");
+
+    const editing = (editMode.section === "cxc" && editMode.id === r.id);
+
+    const tr = document.createElement("tr");
+
+    if (!editing) {
+      tr.innerHTML = `
+        <td>${escAttr(r.vence||"")}</td>
+        <td>${escAttr(r.nombre||"")}</td>
+        <td>${escAttr(r.concepto||"")}</td>
+        <td>${money(r.monto||0)}</td>
+        <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
+        <td>
+          ${
+  String(r.estado || "").toLowerCase() !== "pagado"
+    ? `<button class="ghost" data-act="pay" data-id="${r.id}">Marcar pagado</button>`
+    : ""
+}
+          <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+        </td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_cxc_vence_${r.id}" type="date" value="${escAttr(r.vence||"")}" /></td>
+        <td><input id="ed_cxc_nombre_${r.id}" value="${escAttr(r.nombre||"")}" /></td>
+        <td><input id="ed_cxc_concepto_${r.id}" value="${escAttr(r.concepto||"")}" /></td>
+        <td><input id="ed_cxc_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
+        <td>
+          <select id="ed_cxc_estado_${r.id}">
+            <option value="" ${!r.estado ? "selected" : ""}></option>
+            <option value="Pendiente" ${r.estado==="Pendiente" ? "selected" : ""}>Pendiente</option>
+            <option value="Pagado" ${r.estado==="Pagado" ? "selected" : ""}>Pagado</option>
+          </select>
+        </td>
+        <td>
+          <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
+          <button class="ghost" data-act="cancel">Cancelar</button>
+        </td>
+      `;
+    }
+
     tbody.appendChild(tr);
   }
-tbody.onclick = (e) => {
+
+  tbody.onclick = (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
 
-  const id = btn.dataset.id;
   const act = btn.dataset.act;
-
-  console.log("CXC CLICK", act, id);
+  const id = btn.dataset.id;
 
   if (act === "del") delRow("cxc", id);
-  if (act === "edit") loadcxc(id);
-  if (act === "pay") window.markCxcPaid(id);
- 
+  else if (act === "edit") editCxc(id);
+  else if (act === "save") saveCxc(id);
+  else if (act === "cancel") cancelEdit();
+  else if (act === "pay") window.markCxcPaid(id);
 };
 
-
-
 }
+
 
 function renderCxp(){
   const q = $("cxpSearch").value || "";

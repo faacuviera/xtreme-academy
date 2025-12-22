@@ -15,6 +15,12 @@ const todayISO = ()=> new Date().toISOString().slice(0,10);
 const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
 const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
 
+// ===== MODO EDICIÓN (GLOBAL) =====
+let editMode = {
+  section: null, // "alumnos" | "cxc" | "ingresos" | "egresos"
+  id: null
+};
+
 // ===== Active data (GLOBAL) =====
 const XA_STORE_KEY = "xa_store_v1";
 const XA_ACTIVE_KEY = "xa_active_v1";
@@ -66,6 +72,26 @@ function getActive() {
   xaSave(store);
   return store[id];
 }
+
+function setActive(active) {
+  const store = xaLoad();
+  const id = getActiveId();
+
+  store[id] = active;
+
+  // asegurar arrays por las dudas (mismo criterio que getActive)
+  store[id].cxc ??= [];
+  store[id].cxp ??= [];
+  store[id].ingresos ??= [];
+  store[id].gastos ??= [];
+  store[id].pagos ??= [];
+  store[id].asistencia ??= [];
+  store[id].alumnos ??= [];
+  store[id].inventario ??= [];
+
+  xaSave(store);
+}
+
 
 function ensurecxc(active){
   if (!Array.isArray(active.cxc)) active.cxc = [];
@@ -1206,6 +1232,69 @@ function calcAge(birthISO){
   if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
   return age < 0 ? "" : age;
 }
+
+function isEditing(section, id) {
+  return editMode.section === section && editMode.id === id;
+}
+
+function startEdit(section, id) {
+  editMode = { section, id };
+  render();
+}
+
+function cancelEdit() {
+  editMode = { section: null, id: null };
+  render();
+}
+
+// Tu botón actual llama editAlumno(id)
+function editAlumno(id) {
+  startEdit("alumnos", id);
+}
+
+// Para no romper HTML con comillas, etc.
+function escAttr(v) {
+  return String(v ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function saveAlumno(id) {
+  const nombre     = document.getElementById(`ed_nombre_${id}`)?.value.trim() || "";
+  const nacimiento = document.getElementById(`ed_nacimiento_${id}`)?.value || "";
+  const numero     = document.getElementById(`ed_numero_${id}`)?.value.trim() || "";
+  const ingreso    = document.getElementById(`ed_ingreso_${id}`)?.value || "";
+  const programa   = document.getElementById(`ed_programa_${id}`)?.value.trim() || "";
+  const cuotaStr   = document.getElementById(`ed_cuota_${id}`)?.value || "0";
+  const at         = document.getElementById(`ed_at_${id}`)?.value.trim() || "";
+
+  const cuota = Number(cuotaStr);
+  if (!nombre) return alert("El nombre no puede quedar vacío.");
+  if (Number.isNaN(cuota) || cuota < 0) return alert("La cuota tiene que ser un número válido.");
+
+  const active = getActive();
+  const arr = active.alumnos || [];
+
+  active.alumnos = arr.map(a => {
+    if (a.id !== id) return a;
+    return { ...a, nombre, nacimiento, numero, ingreso, programa, cuota, at };
+  });
+
+  // ⚠️ IMPORTANTE:
+  
+  setActive(active);
+
+  editMode = { section: null, id: null };
+  render();
+}
+
+// Si usás onclick="..." en HTML, esto asegura que existan
+window.editAlumno = editAlumno;
+window.saveAlumno = saveAlumno;
+window.cancelEdit = cancelEdit;
+
 
 function renderAlumnos(){
   if(!$("alTbody")) return;

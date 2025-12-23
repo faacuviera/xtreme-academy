@@ -345,7 +345,9 @@ function persistActive(){
   state.active.updatedAt=Date.now();
   return dbPut("templates", state.active).then(async()=>{
     // reload list (keeps ordering)
-    state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
+    state.templates = (await dbGetAll("templates"))
+  .sort((a,b)=> String(a?.name || "").localeCompare(String(b?.name || "")));
+
     refreshTemplateSelectors();
   });
 }

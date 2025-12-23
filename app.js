@@ -232,43 +232,47 @@ function cloneTemplate(fromTpl, name){
 /* ---------- Bootstrap ---------- */
 async function init(){
   // Default dates
-  ["inFecha","gaFecha","cxcvence","cxpvence"].forEach(id=>{ if($(id)) $(id).value=todayISO(); });
+  ["inFecha","gaFecha","cxcvence","cxpvence"].forEach(id=>{
+    if($(id)) $(id).value = todayISO();
+  });
   $("monthFilter").value = state.filters.month;
 
   // Load templates
   const templates = await dbGetAll("templates");
-templates.sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||"")));
+  state.templates = (templates || []).sort(
+    (a,b)=> String(a?.name || a?.nombre || "")
+      .localeCompare(String(b?.name || b?.nombre || ""))
+  );
 
   // Create first template if none
-  if(state.templates.length===0){
+  if (state.templates.length === 0) {
     const name = monthISO();
-    const t=emptyTemplate(name);
+    const t = emptyTemplate(name);
+    t.name = name;
     await dbPut("templates", t);
-    state.templates=[t];
+    state.templates = [t];
   }
 
-  // Determine active template (stored in localStorage)
+  // Determine active template
   const savedActive = localStorage.getItem("xt_active_template");
-const tpl = state.templates.find(x => x.id === savedActive) || state.templates[state.templates.length - 1];
+  const tpl =
+    state.templates.find(x => x.id === savedActive) ||
+    state.templates[state.templates.length - 1];
 
-state.activeTemplateId = tpl.id;
+  localStorage.setItem("xt_active_template", tpl.id);
+  state.activeTemplateId = tpl.id;
+  setActiveId(tpl.id);
 
-// después de elegir tpl:
-state.activeTemplateId = tpl.id;
+  // Load active data
+  state.active = getActive();
 
-// ✅ IMPORTANTÍSIMO: que el store activo sea el ID de la plantilla
-setActiveId(tpl.id);
-  
-// ✅ cargar datos persistidos para este template (xa_store_v1)
-state.active = getActive();
-
-// asegurar arrays por las dudas
-state.active.cxc ??= [];
-state.active.ingresos ??= [];
-state.active.gastos ??= [];
-state.active.pagos ??= [];
-state.active.asistencia ??= [];
-state.active.alumnos ??= [];
+  // asegurar arrays
+  state.active.cxc ??= [];
+  state.active.ingresos ??= [];
+  state.active.gastos ??= [];
+  state.active.pagos ??= [];
+  state.active.asistencia ??= [];
+  state.active.alumnos ??= [];
 
   // UI wiring
   wireTabs();
@@ -277,12 +281,8 @@ state.active.alumnos ??= [];
   // Render
   refreshTemplateSelectors();
   renderAll();
-
-  // PWA registration
-  // if ("serviceWorker" in navigator) {
-//   navigator.serviceWorker.register("./sw.js");
-// }
 }
+
 
 function saveActive(){
   localStorage.setItem("xt_active_template", state.activeTemplateId);

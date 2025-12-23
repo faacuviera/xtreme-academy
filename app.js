@@ -127,20 +127,35 @@ function addCuotaPendiente(active, alumno) {
 
 /* ---------- IndexedDB minimal wrapper ---------- */
 const DB_NAME = "xtremeCuentasDB";
-const DB_VER = 1;
+const DB_VER = 2;
 
 function openDB(){
-  return new Promise((resolve,reject)=>{
+  return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = ()=>{
-      const db=req.result;
-      const templates=db.createObjectStore("templates",{keyPath:"id"});
-      templates.createIndex("byName","name",{unique:true});
+
+    req.onupgradeneeded = () => {
+      const db = req.result;
+
+      // Crear store si no existe
+      let templates;
+      if (!db.objectStoreNames.contains("templates")) {
+        templates = db.createObjectStore("templates", { keyPath: "id" });
+      } else {
+        templates = req.transaction.objectStore("templates");
+      }
+
+      // ✅ Asegurar que byName NO sea único (porque podés tener nombres repetidos)
+      if (templates.indexNames.contains("byName")) {
+        templates.deleteIndex("byName");
+      }
+      templates.createIndex("byName", "name", { unique: false });
     };
-    req.onsuccess=()=>resolve(req.result);
-    req.onerror=()=>reject(req.error);
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
   });
 }
+
 async function dbGetAll(store){
   const db=await openDB();
   return new Promise((resolve,reject)=>{

@@ -1044,36 +1044,42 @@ function wireActions(){
   });
   $("clearIngresoBtn").addEventListener("click", clearIngresoForm);
 
-  $("addGastoBtn").addEventListener("click", async()=>{
-    const data={
-      id: $("addGastoBtn").dataset.editId || uid(),
-      concepto: $("gaConcepto").value.trim(),
-      fecha: $("gaFecha").value || todayISO(),
-      monto: Number($("gaMonto").value||0),
-      categoria: $("gaCategoria").value.trim(),
-      notas: $("gaNotas").value.trim()
-    };
-    if(!data.concepto){ alert("Poné qué pagaste."); return; }
-    upsert("gastos", data, $("addGastoBtn").dataset.editId);
-    await persistActive(); clearGastoForm(); renderAll();
-  });
-  $("clearGastoBtn").addEventListener("click", clearGastoForm);
+ $("addGastoBtn").addEventListener("click", async () => {
+  const concepto  = $("gaConcepto").value.trim();
+  const fecha     = $("gaFecha").value || todayISO();
+  const monto     = Number($("gaMonto").value || 0);
+  const categoria = $("gaCategoria").value.trim();
+  const notas     = $("gaNotas").value.trim();
 
-  const btnAddCxc = $("addcxcBtn");
-if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
-    const data={
-      id: $("addcxcBtn").dataset.editId || uid(),
-      nombre: $("cxcnombre").value.trim(),
-      vence: $("cxcvence").value || todayISO(),
-      concepto: $("cxcconcepto").value.trim() || "CUOTA",
-      monto: Number($("cxcmonto").value||0),
-      estado: $("cxcestado").value,
-      notas: $("cxcnotas").value.trim()
-    };
-    if(!data.nombre){ alert("Poné el nombre."); return; }
-    upsert("cxc", data, $("addcxcBtn").dataset.editId);
-    await persistActive(); clearcxcForm(); renderAll();
-  });
+  if (!concepto) return alert("Poné qué pagaste.");
+  if (Number.isNaN(monto) || monto <= 0) return alert("El monto tiene que ser un número válido.");
+
+  const editId = $("addGastoBtn").dataset.editId || null;
+
+  const item = {
+    id: editId || uid(),
+    concepto,
+    fecha,
+    monto,
+    categoria,
+    notas
+  };
+
+  const active = getActive();
+  active.gastos ??= [];
+
+  if (editId) {
+    active.gastos = active.gastos.map(g => (g.id === editId ? { ...g, ...item } : g));
+  } else {
+    active.gastos.push(item);
+  }
+
+  setActive(active);
+  await persistActive();
+  clearGastoForm();
+  renderAll();
+});
+
  const btnClearCxc = $("clearcxcBtn");
 if (btnClearCxc) btnClearCxc.addEventListener("click", clearcxcForm);
 

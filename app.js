@@ -478,19 +478,21 @@ function renderIngresos(){
 
 function renderGastos(){
   const q = $("gasSearch").value || "";
-  const rows = (state.active.gastos||[])
-    .filter(x=>textMatch(x,q))
-    .sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  const rows = (state.active.gastos || [])
+    .filter(x => textMatch(x, q))
+    .sort((a,b)=> String(b.fecha||"").localeCompare(String(a.fecha||"")));
 
   $("gasCount").textContent = String(rows.length);
+
   const tbody = $("gasTbody");
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
+
   for(const r of rows){
-    const tr=document.createElement("tr");
+    const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${r.fecha||""}</td>
-      <td>${r.concepto||""}</td>
-      <td>${r.categoria||""}</td>
+      <td>${escAttr(r.fecha||"")}</td>
+      <td>${escAttr(r.concepto||"")}</td>
+      <td>${escAttr(r.categoria||"")}</td>
       <td>${money(r.monto||0)}</td>
       <td>
         <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
@@ -498,14 +500,19 @@ function renderGastos(){
       </td>`;
     tbody.appendChild(tr);
   }
-  tbody.querySelectorAll("button").forEach(b=>{
-    b.addEventListener("click", ()=>{
-      const id=b.dataset.id; const act=b.dataset.act;
-      if(act==="del"){ delRow("gastos", id); }
-      if(act==="edit"){ loadGasto(id); }
-    });
-  });
+
+  tbody.onclick = (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+
+    if (act === "del") delRow("gastos", id);
+    if (act === "edit") loadGasto(id); // por ahora, hasta que hagamos edición en fila
+  };
 }
+
 
 function Paid(id){
   const store = xaLoad();

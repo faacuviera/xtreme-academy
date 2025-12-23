@@ -8,8 +8,10 @@ window.addEventListener("error", (e) => {
   alert("JS ERROR: " + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
 });
 window.addEventListener("unhandledrejection", (e) => {
-  alert("PROMISE ERROR: " + (e.reason?.message || e.reason || "unknown"));
+  console.error("UNHANDLED REJECTION:", e.reason, e);
+  alert("PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown"));
 });
+
 const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(Number(n||0));
 const todayISO = ()=> new Date().toISOString().slice(0,10);
 const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
@@ -152,18 +154,22 @@ async function dbGetAll(store){
 async function dbPut(store, value){
   const db = await openDB();
 
-  // ✅ Si el objectStore usa keyPath "id", esto evita el error
   if (value && (value.id === undefined || value.id === null || value.id === "")) {
-    value.id = uid(); // vos ya tenés uid() arriba
+    value.id = uid();
   }
 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
+    const os = tx.objectStore(store);
+    const req = os.put(value);
+
+    req.onerror = () => reject(req.error || tx.error || new Error("dbPut request failed"));
+    tx.onerror  = () => reject(tx.error || new Error("dbPut tx failed"));
+    tx.onabort  = () => reject(tx.error || new Error("dbPut aborted"));
     tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
-    tx.objectStore(store).put(value);
   });
 }
+
 
 async function dbDelete(store, key){
   const db=await openDB();

@@ -403,36 +403,71 @@ function renderDashboard(){
 
 function renderIngresos(){
   const q = $("ingSearch").value || "";
-  const rows = (state.active.ingresos||[])
-    .filter(x=>textMatch(x,q))
-    .sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  const rows = (state.active.ingresos || [])
+    .filter(x => textMatch(x, q))
+    .sort((a,b) => (b.fecha || "").localeCompare(a.fecha || ""));
 
   $("ingCount").textContent = String(rows.length);
+
   const tbody = $("ingTbody");
-  tbody.innerHTML="";
-  for(const r of rows){
-    const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.fecha||""}</td>
-      <td>${r.nombre||""}</td>
-      <td>${r.concepto||""}</td>
-      <td>${money(r.monto||0)}</td>
-      <td>${r.medio||""}</td>
-      <td><span class="badge ${r.estado==="Pagado"?"ok":""}">${r.estado||""}</span></td>
-      <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
-      </td>`;
+  tbody.innerHTML = "";
+
+  for (const r of rows){
+    const editing = (editMode.section === "ingresos" && editMode.id === r.id);
+    const tr = document.createElement("tr");
+
+    if (!editing) {
+      tr.innerHTML = `
+        <td>${escAttr(r.fecha||"")}</td>
+        <td>${escAttr(r.nombre||"")}</td>
+        <td>${escAttr(r.concepto||"")}</td>
+        <td>${money(r.monto||0)}</td>
+        <td>${escAttr(r.medio||"")}</td>
+        <td><span class="badge ${r.estado==="Pagado"?"ok":""}">${escAttr(r.estado||"")}</span></td>
+        <td>
+          <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+        </td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_ing_fecha_${r.id}" type="date" value="${escAttr(r.fecha||"")}" /></td>
+        <td><input id="ed_ing_nombre_${r.id}" value="${escAttr(r.nombre||"")}" /></td>
+        <td><input id="ed_ing_concepto_${r.id}" value="${escAttr(r.concepto||"")}" /></td>
+        <td><input id="ed_ing_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
+        <td><input id="ed_ing_medio_${r.id}" value="${escAttr(r.medio||"")}" /></td>
+        <td>
+          <select id="ed_ing_estado_${r.id}">
+            <option value="" ${!r.estado ? "selected" : ""}></option>
+            <option value="Pagado" ${r.estado==="Pagado" ? "selected" : ""}>Pagado</option>
+            <option value="Pendiente" ${r.estado==="Pendiente" ? "selected" : ""}>Pendiente</option>
+          </select>
+        </td>
+        <td>
+          <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
+          <button class="ghost" data-act="cancel">Cancelar</button>
+        </td>
+      `;
+    }
+
     tbody.appendChild(tr);
   }
-  tbody.querySelectorAll("button").forEach(b=>{
-    b.addEventListener("click", (e)=>{
-      const id=b.dataset.id; const act=b.dataset.act;
-      if(act==="del"){ delRow("ingresos", id); }
-      if(act==="edit"){ loadIngreso(id); }
-    });
-  });
+
+  // Delegación (como CxC)
+  tbody.onclick = (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+
+    if (act === "del") delRow("ingresos", id);
+    else if (act === "edit") editIngreso(id);
+    else if (act === "save") saveIngreso(id);
+    else if (act === "cancel") cancelEdit();
+  };
 }
+
 
 function renderGastos(){
   const q = $("gasSearch").value || "";
@@ -534,6 +569,42 @@ function saveCxc(id) {
 
 window.editCxc = editCxc;
 window.saveCxc = saveCxc;
+
+// ===== INGRESOS: acciones =====
+function editIngreso(id){
+  startEdit("ingresos", id);
+}
+
+function saveIngreso(id){
+  const fecha    = document.getElementById(`ed_ing_fecha_${id}`)?.value || todayISO();
+  const nombre   = document.getElementById(`ed_ing_nombre_${id}`)?.value.trim() || "";
+  const concepto = document.getElementById(`ed_ing_concepto_${id}`)?.value.trim() || "";
+  const montoStr = document.getElementById(`ed_ing_monto_${id}`)?.value || "0";
+  const medio    = document.getElementById(`ed_ing_medio_${id}`)?.value.trim() || "";
+  const estado   = document.getElementById(`ed_ing_estado_${id}`)?.value || "";
+
+  const monto = Number(montoStr);
+  if (!concepto) return alert("El concepto no puede quedar vacío.");
+  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+
+  const active = getActive();
+  active.ingresos = (active.ingresos || []).map(r =>
+    r.id === id ? { ...r, fecha, nombre, concepto, monto, medio, estado } : r
+  );
+
+  setActive(active);
+  editMode = { section: null, id: null };
+  render(); // tu wrapper -> renderAll()
+}
+
+  setActive(active);
+  editMode = { section: null, id: null };
+  render(); // usa tu wrapper (renderAll)
+}
+
+window.editIngreso = editIngreso;
+window.saveIngreso = saveIngreso;
+
 
 function rendercxc(){
   const q = ($("cxcSearch").value || "").trim();

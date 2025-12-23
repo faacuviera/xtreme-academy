@@ -150,14 +150,21 @@ async function dbGetAll(store){
   });
 }
 async function dbPut(store, value){
-  const db=await openDB();
-  return new Promise((resolve,reject)=>{
-    const tx=db.transaction(store,"readwrite");
-    tx.oncomplete=()=>resolve(true);
-    tx.onerror=()=>reject(tx.error);
+  const db = await openDB();
+
+  // ✅ Si el objectStore usa keyPath "id", esto evita el error
+  if (value && (value.id === undefined || value.id === null || value.id === "")) {
+    value.id = uid(); // vos ya tenés uid() arriba
+  }
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
     tx.objectStore(store).put(value);
   });
 }
+
 async function dbDelete(store, key){
   const db=await openDB();
   return new Promise((resolve,reject)=>{

@@ -509,6 +509,7 @@ function renderIngresos(){
   };
 }
 
+let editingGastoId = null;
 
 function renderGastos(){
   const q = $("gasSearch").value || "";
@@ -845,15 +846,20 @@ function clearIngresoForm(){
   $("addIngresoBtn").textContent="Guardar ingreso";
 }
 function loadGasto(id){
-  const r=(state.active.gastos||[]).find(x=>x.id===id); if(!r) return;
-  $("gaConcepto").value=r.concepto||"";
-  $("gaFecha").value=r.fecha||todayISO();
-  $("gaMonto").value=r.monto||"";
-  $("gaCategoria").value=r.categoria||"";
-  $("gaNotas").value=r.notas||"";
-  $("addGastoBtn").dataset.editId=id;
-  $("addGastoBtn").textContent="Actualizar egreso";
+  const r = (state.active.gastos || []).find(x => x.id === id);
+  if(!r) return;
+
+  $("gaConcepto").value  = r.concepto || "";
+  $("gaFecha").value     = r.fecha || "";        // 👈 no uses todayISO acá
+  $("gaMonto").value     = String(r.monto ?? "");
+  $("gaCategoria").value = r.categoria || "";
+  $("gaNotas").value     = r.notas || "";
+
+  $("addGastoBtn").dataset.editId = id;
+$("addGastoBtn").textContent = "Actualizar egreso";
+
 }
+
 function clearGastoForm(){
   ["gaConcepto","gaMonto","gaCategoria","gaNotas"].forEach(id=>$(id).value="");
   $("gaFecha").value=todayISO();
@@ -1057,7 +1063,7 @@ function wireActions(){
 
   $("addGastoBtn").addEventListener("click", async () => {
   const concepto  = $("gaConcepto").value.trim();
-  const fecha     = $("gaFecha").value || todayISO();
+  const fechaIn   = $("gaFecha").value.trim();     // 👈 no default acá
   const monto     = Number($("gaMonto").value || 0);
   const categoria = $("gaCategoria").value.trim();
   const notas     = $("gaNotas").value.trim();
@@ -1065,33 +1071,54 @@ function wireActions(){
   if (!concepto) return alert("Poné qué pagaste.");
   if (Number.isNaN(monto) || monto <= 0) return alert("El monto tiene que ser un número válido.");
 
-  const editId = $("addGastoBtn").dataset.editId || null;
-
-  const item = {
-    id: editId || uid(),
-    concepto,
-    fecha,
-    monto,
-    categoria,
-    notas
-  };
+  const btn = $("addGastoBtn");
+  const editId = btn.dataset.editId || null;
 
   const active = getActive();
   active.gastos ??= [];
 
   if (editId) {
-    active.gastos = active.gastos.map(g => (g.id === editId ? { ...g, ...item } : g));
+    // ✏️ EDITAR: mantener fecha previa si el input quedó vacío
+    const prev = active.gastos.find(g => g.id === editId);
+    if (!prev) return alert("No encontré ese egreso para editar.");
+
+    const updated = {
+      ...prev,
+      concepto,
+      fecha: (fechaIn || prev.fecha || todayISO()),
+      monto,
+      categoria,
+      notas
+    };
+
+    active.gastos = active.gastos.map(g => (g.id === editId ? updated : g));
+
+    // salir del modo edición
+    delete btn.dataset.editId;
+    btn.textContent = "Agregar egreso";
+
   } else {
+    // ➕ NUEVO
+    const item = {
+      id: uid(),
+      concepto,
+      fecha: (fechaIn || todayISO()),
+      monto,
+      categoria,
+      notas
+    };
+
     active.gastos.push(item);
   }
 
- setActive(active);
-state.active = active;
-await persistActive(active);   
-clearGastoForm();
-renderAll();
+  setActive(active);
+  state.active = active;
+  await persistActive(active);
 
+  clearGastoForm();
+  renderAll();
 });
+
 
 
  const btnClearCxc = $("clearcxcBtn");

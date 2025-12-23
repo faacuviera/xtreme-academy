@@ -850,7 +850,7 @@ function clearGastoForm(){
   $("addGastoBtn").textContent="Guardar egreso";
 }
 function loadCxc(id){
-  window.loadcxc = (id) => editCxc(id);
+  window.loadcxc = (id) => editCxc(id);M
 window.loadCxc = (id) => editCxc(id);
 
   const r=(state.active.cxc||[]).find(x=>x.id===id); if(!r) return;
@@ -1044,7 +1044,7 @@ function wireActions(){
   });
   $("clearIngresoBtn").addEventListener("click", clearIngresoForm);
 
- $("addGastoBtn").addEventListener("click", async () => {
+  $("addGastoBtn").addEventListener("click", async () => {
   const concepto  = $("gaConcepto").value.trim();
   const fecha     = $("gaFecha").value || todayISO();
   const monto     = Number($("gaMonto").value || 0);
@@ -1075,10 +1075,12 @@ function wireActions(){
   }
 
   setActive(active);
+  state.active = active;      // ✅ ESTA LÍNEA
   await persistActive();
   clearGastoForm();
   renderAll();
 });
+
 
  const btnClearCxc = $("clearcxcBtn");
 if (btnClearCxc) btnClearCxc.addEventListener("click", clearcxcForm);

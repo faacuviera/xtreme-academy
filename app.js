@@ -341,16 +341,27 @@ function venceDia10ISO() {
   return `${today.slice(0, 7)}-10`;
 }
 
-function persistActive(){
-  state.active.updatedAt=Date.now();
-  return dbPut("templates", state.active).then(async()=>{
-    // reload list (keeps ordering)
+function persistActive(activeParam){
+  const active = activeParam || state.active || getActive();
+
+  // ✅ clave: persistir SIEMPRE con el id de la plantilla activa
+  const id = getActiveId();
+  active.id = id;
+
+  // nombre por si falta
+  active.name ||= monthISO();
+
+  active.updatedAt = Date.now();
+  state.active = active;
+
+  return dbPut("templates", active).then(async () => {
     state.templates = (await dbGetAll("templates"))
-  .sort((a,b)=> String(a?.name || "").localeCompare(String(b?.name || "")));
+      .sort((a,b)=> String(a?.name || "").localeCompare(String(b?.name || "")));
 
     refreshTemplateSelectors();
   });
 }
+
 
 function inMonth(dateISO, monthYYYYMM){
   if(!dateISO) return false;
@@ -1074,11 +1085,12 @@ function wireActions(){
     active.gastos.push(item);
   }
 
-  setActive(active);
-  state.active = active;      // ✅ ESTA LÍNEA
-  await persistActive();
-  clearGastoForm();
-  renderAll();
+ setActive(active);
+state.active = active;
+await persistActive(active);   
+clearGastoForm();
+renderAll();
+
 });
 
 

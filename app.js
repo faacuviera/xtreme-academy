@@ -216,7 +216,7 @@ async function init(){
 
   // Load templates
   const templates = await dbGetAll("templates");
-  state.templates = templates.sort((a,b)=>a.name.localeCompare(b.name));
+  .sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||"")))
 
   // Create first template if none
   if(state.templates.length===0){

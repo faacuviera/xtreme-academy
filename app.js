@@ -597,11 +597,6 @@ function saveIngreso(id){
   render(); // tu wrapper -> renderAll()
 }
 
-  setActive(active);
-  editMode = { section: null, id: null };
-  render(); // usa tu wrapper (renderAll)
-}
-
 window.editIngreso = editIngreso;
 window.saveIngreso = saveIngreso;
 

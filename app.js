@@ -22,11 +22,6 @@ window.addEventListener("unhandledrejection", (e) => {
   alert("PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown"));
 });
 
-const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(Number(n||0));
-const todayISO = ()=> new Date().toISOString().slice(0,10);
-const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
-const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
-
 /* ---------- Logging & non-fatal notifications ---------- */
 function createLogger(scope) {
   const prefix = `[${scope}]`;

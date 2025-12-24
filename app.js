@@ -13,14 +13,6 @@ import {
 } from "./utils.js";
 
 const $ = (id)=>document.getElementById(id);
-// 🔎 DEBUG: mostrar errores en pantalla (iPhone friendly)
-window.addEventListener("error", (e) => {
-  alert("JS ERROR: " + (e.message || e.type) + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
-});
-window.addEventListener("unhandledrejection", (e) => {
-  console.error("UNHANDLED REJECTION:", e.reason, e);
-  alert("PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown"));
-});
 
 /* ---------- Logging & non-fatal notifications ---------- */
 function createLogger(scope) {
@@ -60,15 +52,50 @@ function recordStorageFailure(context, err) {
   showSoftBanner("⚠️ Problema guardando datos locales. Revisá tu navegador.");
 }
 
+// 🔎 DEBUG: mostrar errores en pantalla (iPhone friendly) sin bloquear la UI
+window.addEventListener("error", (e) => {
+  const msg = "JS ERROR: " + (e.message || e.type) + " " + (e.filename || "") + ":" + (e.lineno || "");
+  log.error(msg, e.error || e);
+  showSoftBanner(msg);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const msg = "PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown");
+  log.error(msg, e.reason || e);
+  showSoftBanner(msg);
+});
+
 // ===== MODO EDICIÓN (GLOBAL) =====
 let editMode = {
-  section: null, // "alumnos" | "cxc" | "ingresos" | "egresos"
+  section: null, // "alumnos" | "cxc" | "ingresos" | "gastos" | "cxp"
   id: null
 };
 
 // ===== Active data (GLOBAL) =====
 const XA_STORE_KEY = "xa_store_v1";
 const XA_ACTIVE_KEY = "xa_active_v1";
+const LOCAL_STORAGE_BUDGET = 4.5 * 1024 * 1024; // ~4.5MB
+
+function safeSetItem(key, value) {
+  const isString = typeof value === "string";
+  const payload = isString ? value : JSON.stringify(value || {});
+  if (payload.length > LOCAL_STORAGE_BUDGET) {
+    recordStorageFailure(`escritura localStorage (${key})`, new Error("Payload demasiado grande para localStorage"));
+    return;
+  }
+  try {
+    localStorage.setItem(key, payload);
+    return;
+  } catch (err) {
+    log.warn("Primer intento de guardado falló, reintentando con limpieza", { key, err });
+  }
+
+  try {
+    localStorage.removeItem(key);
+    localStorage.setItem(key, payload);
+  } catch (err2) {
+    recordStorageFailure(`escritura localStorage (${key})`, err2);
+  }
+}
 
 function xaLoad() {
   try { return JSON.parse(localStorage.getItem(XA_STORE_KEY)) || {}; }
@@ -79,11 +106,7 @@ function xaLoad() {
 }
 
 function xaSave(store) {
-  try {
-    localStorage.setItem(XA_STORE_KEY, JSON.stringify(store || {}));
-  } catch (err) {
-    recordStorageFailure("escritura localStorage", err);
-  }
+  safeSetItem(XA_STORE_KEY, store || {});
 }
 
 function getActiveId() {
@@ -91,7 +114,7 @@ function getActiveId() {
 }
 
 function setActiveId(id) {
-  localStorage.setItem(XA_ACTIVE_KEY, id);
+  safeSetItem(XA_ACTIVE_KEY, id);
 }
 
 function getActive() {
@@ -312,7 +335,7 @@ async function init(){
     state.templates.find(x => x.id === savedActive) ||
     state.templates[state.templates.length - 1];
 
-  localStorage.setItem("xt_active_template", tpl.id);
+  safeSetItem("xt_active_template", tpl.id);
   state.activeTemplateId = tpl.id;
   setActiveId(tpl.id);
 
@@ -338,7 +361,7 @@ async function init(){
 
 
 function saveActive(){
-  localStorage.setItem("xt_active_template", state.activeTemplateId);
+  safeSetItem("xt_active_template", state.activeTemplateId);
 }
 
 function saveActiveData(active) {
@@ -541,8 +564,6 @@ function renderIngresos(){
   };
 }
 
-let editingGastoId = null;
-
 function renderGastos(){
   const q = $("gasSearch").value || "";
   const rows = (state.active.gastos || [])
@@ -555,16 +576,29 @@ function renderGastos(){
   tbody.innerHTML = "";
 
   for(const r of rows){
+    const editing = (editMode.section === "gastos" && editMode.id === r.id);
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <th scope="row">${escAttr(r.fecha||"")}</th>
-      <td>${escAttr(r.concepto||"")}</td>
-      <td>${escAttr(r.categoria||"")}</td>
-      <td>${money(r.monto||0)}</td>
-      <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Borrar</button>
-      </td>`;
+    if (!editing) {
+      tr.innerHTML = `
+        <th scope="row">${escAttr(r.fecha||"")}</th>
+        <td>${escAttr(r.concepto||"")}</td>
+        <td>${escAttr(r.categoria||"")}</td>
+        <td>${money(r.monto||0)}</td>
+        <td>
+          <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Borrar</button>
+        </td>`;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_gas_fecha_${r.id}" type="date" value="${escAttr(r.fecha||"")}" /></td>
+        <td><input id="ed_gas_concepto_${r.id}" value="${escAttr(r.concepto||"")}" /></td>
+        <td><input id="ed_gas_categoria_${r.id}" value="${escAttr(r.categoria||"")}" /></td>
+        <td><input id="ed_gas_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
+        <td>
+          <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
+          <button class="ghost" data-act="cancel">Cancelar</button>
+        </td>`;
+    }
     tbody.appendChild(tr);
   }
 
@@ -576,7 +610,9 @@ function renderGastos(){
     const id = btn.dataset.id;
 
     if (act === "del") delRow("gastos", id);
-    if (act === "edit") loadGasto(id); // por ahora, hasta que hagamos edición en fila
+    else if (act === "edit") editGasto(id);
+    else if (act === "save") saveGasto(id);
+    else if (act === "cancel") cancelEdit();
   };
 }
 
@@ -644,6 +680,7 @@ function saveCxc(id) {
   });
 
   setActive(active);
+  persistActive(active);
   editMode = { section: null, id: null };
   render();
 }
@@ -674,12 +711,42 @@ function saveIngreso(id){
   );
 
   setActive(active);
+  persistActive(active);
   editMode = { section: null, id: null };
   render(); // tu wrapper -> renderAll()
 }
 
 window.editIngreso = editIngreso;
 window.saveIngreso = saveIngreso;
+
+// ===== GASTOS: acciones =====
+function editGasto(id) {
+  startEdit("gastos", id);
+}
+
+function saveGasto(id) {
+  const fecha    = document.getElementById(`ed_gas_fecha_${id}`)?.value || todayISO();
+  const concepto = document.getElementById(`ed_gas_concepto_${id}`)?.value.trim() || "";
+  const categoria= document.getElementById(`ed_gas_categoria_${id}`)?.value.trim() || "";
+  const montoStr = document.getElementById(`ed_gas_monto_${id}`)?.value || "0";
+
+  const monto = Number(montoStr);
+  if (!concepto) return alert("El concepto no puede quedar vacío.");
+  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+
+  const active = getActive();
+  active.gastos = (active.gastos || []).map(r =>
+    r.id === id ? { ...r, fecha, concepto, categoria, monto } : r
+  );
+
+  setActive(active);
+  persistActive(active);
+  editMode = { section: null, id: null };
+  render();
+}
+
+window.editGasto = editGasto;
+window.saveGasto = saveGasto;
 
 
 function rendercxc(){
@@ -774,28 +841,52 @@ function renderCxp(){
   tbody.innerHTML="";
   const now = todayISO();
   for(const r of rows){
+    const editing = (editMode.section === "cxp" && editMode.id === r.id);
     const overdue = r.estado!=="Pagado" && r.vence && r.vence < now;
     const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <th scope="row">${escAttr(r.vence||"")}</th>
-      <td>${r.proveedor||""}</td>
-      <td>${r.concepto||""}</td>
-      <td>${money(r.monto||0)}</td>
-      <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
-      <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
-      </td>`;
+    if (!editing) {
+      tr.innerHTML = `
+        <th scope="row">${escAttr(r.vence||"")}</th>
+        <td>${r.proveedor||""}</td>
+        <td>${r.concepto||""}</td>
+        <td>${money(r.monto||0)}</td>
+        <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
+        <td>
+          <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
+        </td>`;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_cxp_vence_${r.id}" type="date" value="${escAttr(r.vence||"")}" /></td>
+        <td><input id="ed_cxp_proveedor_${r.id}" value="${escAttr(r.proveedor||"")}" /></td>
+        <td><input id="ed_cxp_concepto_${r.id}" value="${escAttr(r.concepto||"")}" /></td>
+        <td><input id="ed_cxp_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
+        <td>
+          <select id="ed_cxp_estado_${r.id}">
+            <option value="Pendiente" ${r.estado==="Pendiente" ? "selected" : ""}>Pendiente</option>
+            <option value="Pagado" ${r.estado==="Pagado" ? "selected" : ""}>Pagado</option>
+          </select>
+        </td>
+        <td>
+          <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
+          <button class="ghost" data-act="cancel">Cancelar</button>
+        </td>`;
+    }
     tbody.appendChild(tr);
   }
-  tbody.querySelectorAll("button").forEach(b=>{
-    b.addEventListener("click", ()=>{
-      const id=b.dataset.id; const act=b.dataset.act;
-      if(act==="del"){ delRow("cxp", id); }
-      if(act==="edit"){ loadCxp(id); }
-    });
-  });
+  tbody.onclick = (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+
+    if (act === "del") delRow("cxp", id);
+    else if (act === "edit") editCxp(id);
+    else if (act === "save") saveCxp(id);
+    else if (act === "cancel") cancelEdit();
+  };
 }
 
 function renderInventario(){
@@ -838,7 +929,7 @@ function loadStore() {
 }
 
 function saveStore(store) {
-  localStorage.setItem("xa_store_v1", JSON.stringify(store));
+  safeSetItem("xa_store_v1", store || {});
 }
 
 async function delRow(listName, id) {
@@ -934,6 +1025,32 @@ function clearCxpForm(){
   delete $("addCxpBtn").dataset.editId;
   $("addCxpBtn").textContent="Guardar";
 }
+function editCxp(id) {
+  startEdit("cxp", id);
+}
+function saveCxp(id) {
+  const proveedor = document.getElementById(`ed_cxp_proveedor_${id}`)?.value.trim() || "";
+  const vence     = document.getElementById(`ed_cxp_vence_${id}`)?.value || todayISO();
+  const concepto  = document.getElementById(`ed_cxp_concepto_${id}`)?.value.trim() || "";
+  const montoStr  = document.getElementById(`ed_cxp_monto_${id}`)?.value || "0";
+  const estado    = document.getElementById(`ed_cxp_estado_${id}`)?.value || "Pendiente";
+
+  const monto = Number(montoStr);
+  if (!proveedor) return alert("El proveedor es obligatorio.");
+  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+
+  const active = getActive();
+  active.cxp = (active.cxp || []).map(c =>
+    c.id === id ? { ...c, proveedor, vence, concepto, monto, estado } : c
+  );
+
+  setActive(active);
+  persistActive(active);
+  editMode = { section: null, id: null };
+  render();
+}
+window.editCxp = editCxp;
+window.saveCxp = saveCxp;
 function loadInv(id){
   const r=(state.active.inventario||[]).find(x=>x.id===id); if(!r) return;
   $("invCategoria").value=r.categoria||"";
@@ -1318,12 +1435,43 @@ async function importBackup(e){
     const txt = await file.text();
     const payload = JSON.parse(txt);
     if(!payload.templates || !Array.isArray(payload.templates)) throw new Error("Formato inválido");
-    if(!confirm("¿Importar respaldo? Esto reemplaza/mezcla plantillas existentes por nombre.")) return;
+
+    const version = Number(payload.version || 0);
+    if (version && version !== 1) {
+      const ok = confirm(`El respaldo es de versión ${version} y la app espera v1. ¿Intentar importarlo igual?`);
+      if (!ok) return;
+    }
+
+    const summaryLines = payload.templates.map(t => {
+      const name = t.name || "(sin nombre)";
+      const ing = (t.ingresos||[]).length;
+      const gas = (t.gastos||[]).length;
+      const cxc = (t.cxc||[]).length;
+      const cxp = (t.cxp||[]).length;
+      const inv = (t.inventario||[]).length;
+      const alumnos = (t.alumnos||[]).length;
+      return `- ${name} (ing:${ing} gas:${gas} cxc:${cxc} cxp:${cxp} inv:${inv} alumnos:${alumnos})`;
+    }).join("\n");
+
+    const filterName = prompt(
+      `Plantillas encontradas (${payload.templates.length}):\n${summaryLines}\n\nEscribí el nombre que querés importar o dejá vacío para importar todas.`
+    )?.trim();
+
+    const selected = filterName
+      ? payload.templates.filter(t => String(t.name || "").trim() === filterName)
+      : payload.templates;
+
+    if (filterName && selected.length === 0) {
+      alert("No encontré esa plantilla en el respaldo.");
+      return;
+    }
+
+    if(!confirm(`¿Importar ${selected.length} plantilla(s)? Esto reemplaza/mezcla plantillas existentes por nombre.`)) return;
 
     // Merge by name (unique)
     const existing = await dbGetAll("templates");
     const byName = new Map(existing.map(t=>[t.name,t]));
-    for(const t of payload.templates){
+    for(const t of selected){
       // Normalize
       if(!t.id) t.id=uid();
       t.updatedAt=Date.now();

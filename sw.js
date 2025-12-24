@@ -1,5 +1,5 @@
 const CACHE_NAME = "xtreme-cuentas-v3";
-const ASSETS = ["./styles.css","./app.js","./manifest.json","./icon-192.png","./icon-512.png"];
+const ASSETS = ["./styles.css","./app.js","./utils.js","./manifest.json","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",(e)=>{
   e.waitUntil((async()=>{
     const cache = await caches.open(CACHE_NAME);

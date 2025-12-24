@@ -2,6 +2,16 @@
  *  - Guardado local en IndexedDB
  *  - Plantillas (meses) con tablas: ingresos, gastos, cxc, cxp, inventario
  */
+import {
+  money,
+  todayISO,
+  monthISO,
+  uid,
+  csvEscape,
+  toCSV,
+  download
+} from "./utils.js";
+
 const $ = (id)=>document.getElementById(id);
 // 🔎 DEBUG: mostrar errores en pantalla (iPhone friendly)
 window.addEventListener("error", (e) => {
@@ -11,11 +21,6 @@ window.addEventListener("unhandledrejection", (e) => {
   console.error("UNHANDLED REJECTION:", e.reason, e);
   alert("PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown"));
 });
-
-const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(Number(n||0));
-const todayISO = ()=> new Date().toISOString().slice(0,10);
-const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
-const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
 
 // ===== MODO EDICIÓN (GLOBAL) =====
 let editMode = {
@@ -372,27 +377,6 @@ function textMatch(obj, q){
   if(!q) return true;
   const s = JSON.stringify(obj).toLowerCase();
   return s.includes(q.toLowerCase());
-}
-
-function csvEscape(v){
-  const s = (v===null||v===undefined) ? "" : String(v);
-  if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-  return s;
-}
-
-function download(filename, blob){
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 2000);
-}
-
-function toCSV(rows, headers){
-  const head = headers.map(csvEscape).join(",") + "\n";
-  const body = rows.map(r=>headers.map(h=>csvEscape(r[h])).join(",")).join("\n");
-  return head + body + "\n";
 }
 
 /* ---------- Rendering ---------- */

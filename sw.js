@@ -1,5 +1,14 @@
-const CACHE_NAME = "xtreme-cuentas-v3";
-const ASSETS = ["./styles.css","./app.js","./utils.js","./manifest.json","./icon-192.png","./icon-512.png"];
+const CACHE_NAME = "xtreme-cuentas-v4";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./utils.js",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
+];
 self.addEventListener("install",(e)=>{
   e.waitUntil((async()=>{
     const cache = await caches.open(CACHE_NAME);
@@ -15,8 +24,25 @@ self.addEventListener("activate",(e)=>{
   })());
 });
 self.addEventListener("fetch",(e)=>{
-  if (e.request.mode === "navigate") return;
   const req = e.request;
+
+  // Navegaciones: devolvemos la app cacheada (offline-first)
+  if (req.mode === "navigate") {
+    e.respondWith((async()=>{
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match("./index.html");
+      try{
+        const res = await fetch(req);
+        if (res && res.status === 200) cache.put("./index.html", res.clone());
+        return res;
+      }catch(err){
+        return cached || new Response("Sin conexión y recurso no está en caché.", {status: 503});
+      }
+    })());
+    return;
+  }
+
+  // Otros assets: cache-first con relleno de red y fallback
   e.respondWith((async()=>{
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(req);

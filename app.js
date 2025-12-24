@@ -457,6 +457,12 @@ function textMatch(obj, q){
   return s.includes(q.toLowerCase());
 }
 
+function noteHtml(txt){
+  const note = (txt || "").trim();
+  if (!note) return `<span class="note-empty">—</span>`;
+  return `<div class="note-text">${escAttr(note)}</div>`;
+}
+
 /* ---------- Rendering ---------- */
 function render(){
   renderAll();
@@ -529,6 +535,7 @@ function renderIngresos(){
         <td>${money(r.monto||0)}</td>
         <td>${escAttr(r.medio||"")}</td>
         <td><span class="badge ${r.estado==="Pagado"?"ok":""}">${escAttr(r.estado||"")}</span></td>
+        <td class="note-cell">${noteHtml(r.notas)}</td>
         <td>
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Borrar</button>
@@ -548,6 +555,7 @@ function renderIngresos(){
             <option value="Pendiente" ${r.estado==="Pendiente" ? "selected" : ""}>Pendiente</option>
           </select>
         </td>
+        <td><textarea id="ed_ing_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
         <td>
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
@@ -593,6 +601,7 @@ function renderGastos(){
         <td>${escAttr(r.concepto||"")}</td>
         <td>${escAttr(r.categoria||"")}</td>
         <td>${money(r.monto||0)}</td>
+        <td class="note-cell">${noteHtml(r.notas)}</td>
         <td>
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Borrar</button>
@@ -603,6 +612,7 @@ function renderGastos(){
         <td><input id="ed_gas_concepto_${r.id}" value="${escAttr(r.concepto||"")}" /></td>
         <td><input id="ed_gas_categoria_${r.id}" value="${escAttr(r.categoria||"")}" /></td>
         <td><input id="ed_gas_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
+        <td><textarea id="ed_gas_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
         <td>
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
@@ -675,6 +685,7 @@ function saveCxc(id) {
   const concepto = document.getElementById(`ed_cxc_concepto_${id}`)?.value.trim() || "";
   const montoStr = document.getElementById(`ed_cxc_monto_${id}`)?.value || "0";
   const estado   = document.getElementById(`ed_cxc_estado_${id}`)?.value || "";
+  const notas    = document.getElementById(`ed_cxc_notas_${id}`)?.value || "";
 
   const monto = Number(montoStr);
   if (!nombre) return alert("El nombre no puede quedar vacío.");
@@ -685,7 +696,7 @@ function saveCxc(id) {
 
   active.cxc = arr.map(r => {
     if (r.id !== id) return r;
-    return { ...r, vence, nombre, concepto, monto, estado };
+    return { ...r, vence, nombre, concepto, monto, estado, notas };
   });
 
   setActive(active);
@@ -709,6 +720,7 @@ function saveIngreso(id){
   const montoStr = document.getElementById(`ed_ing_monto_${id}`)?.value || "0";
   const medio    = document.getElementById(`ed_ing_medio_${id}`)?.value.trim() || "";
   const estado   = document.getElementById(`ed_ing_estado_${id}`)?.value || "";
+  const notas    = document.getElementById(`ed_ing_notas_${id}`)?.value || "";
 
   const monto = Number(montoStr);
   if (!concepto) return alert("El concepto no puede quedar vacío.");
@@ -716,7 +728,7 @@ function saveIngreso(id){
 
   const active = getActive();
   active.ingresos = (active.ingresos || []).map(r =>
-    r.id === id ? { ...r, fecha, nombre, concepto, monto, medio, estado } : r
+    r.id === id ? { ...r, fecha, nombre, concepto, monto, medio, estado, notas } : r
   );
 
   setActive(active);
@@ -738,6 +750,7 @@ function saveGasto(id) {
   const concepto = document.getElementById(`ed_gas_concepto_${id}`)?.value.trim() || "";
   const categoria= document.getElementById(`ed_gas_categoria_${id}`)?.value.trim() || "";
   const montoStr = document.getElementById(`ed_gas_monto_${id}`)?.value || "0";
+  const notas    = document.getElementById(`ed_gas_notas_${id}`)?.value || "";
 
   const monto = Number(montoStr);
   if (!concepto) return alert("El concepto no puede quedar vacío.");
@@ -745,7 +758,7 @@ function saveGasto(id) {
 
   const active = getActive();
   active.gastos = (active.gastos || []).map(r =>
-    r.id === id ? { ...r, fecha, concepto, categoria, monto } : r
+    r.id === id ? { ...r, fecha, concepto, categoria, monto, notas } : r
   );
 
   setActive(active);
@@ -789,6 +802,7 @@ function rendercxc(){
         <td>${escAttr(r.concepto||"")}</td>
         <td>${money(r.monto||0)}</td>
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
+        <td class="note-cell">${noteHtml(r.notas)}</td>
         <td>
           ${
   String(r.estado || "").toLowerCase() !== "pagado"
@@ -812,6 +826,7 @@ function rendercxc(){
             <option value="Pagado" ${r.estado==="Pagado" ? "selected" : ""}>Pagado</option>
           </select>
         </td>
+        <td><textarea id="ed_cxc_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
         <td>
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
@@ -861,6 +876,7 @@ function renderCxp(){
         <td>${r.concepto||""}</td>
         <td>${money(r.monto||0)}</td>
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
+        <td class="note-cell">${noteHtml(r.notas)}</td>
         <td>
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
@@ -877,6 +893,7 @@ function renderCxp(){
             <option value="Pagado" ${r.estado==="Pagado" ? "selected" : ""}>Pagado</option>
           </select>
         </td>
+        <td><textarea id="ed_cxp_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
         <td>
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
@@ -1061,6 +1078,7 @@ function saveCxp(id) {
   const concepto  = document.getElementById(`ed_cxp_concepto_${id}`)?.value.trim() || "";
   const montoStr  = document.getElementById(`ed_cxp_monto_${id}`)?.value || "0";
   const estado    = document.getElementById(`ed_cxp_estado_${id}`)?.value || "Pendiente";
+  const notas     = document.getElementById(`ed_cxp_notas_${id}`)?.value || "";
 
   const monto = Number(montoStr);
   if (!proveedor) return alert("El proveedor es obligatorio.");
@@ -1068,7 +1086,7 @@ function saveCxp(id) {
 
   const active = getActive();
   active.cxp = (active.cxp || []).map(c =>
-    c.id === id ? { ...c, proveedor, vence, concepto, monto, estado } : c
+    c.id === id ? { ...c, proveedor, vence, concepto, monto, estado, notas } : c
   );
 
   setActive(active);

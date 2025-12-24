@@ -1033,28 +1033,6 @@ function renderResumen() {
 
 window.renderResumen = renderResumen;
 
-function deleteAlumno(id) {
-  const active = getActive?.() || state?.active;
-  if (!active) return;
-
-  if (!confirm("¿Borrar alumno?")) return;
-
-  log.info("Borrando alumno", { id, total: (active.alumnos || []).length });
-
-  active.alumnos = (active.alumnos || []).filter(a => a.id !== id);
-
-  log.info("Alumnos restantes", { total: (active.alumnos || []).length });
-
-  saveActiveData(active);
-  state.active = active;
-
-  if (typeof renderAlumnos === "function") renderAlumnos();
-  if (typeof renderResumen === "function") renderResumen();
-}
-window.deleteAlumno = deleteAlumno;
-
-
-
 /* ---------- Actions / Events ---------- */
 function wireActions(){
     try {

@@ -459,15 +459,15 @@ function renderIngresos(){
 
     if (!editing) {
       tr.innerHTML = `
-        <td>${escAttr(r.fecha||"")}</td>
+        <th scope="row">${escAttr(r.fecha||"")}</th>
         <td>${escAttr(r.nombre||"")}</td>
         <td>${escAttr(r.concepto||"")}</td>
         <td>${money(r.monto||0)}</td>
         <td>${escAttr(r.medio||"")}</td>
         <td><span class="badge ${r.estado==="Pagado"?"ok":""}">${escAttr(r.estado||"")}</span></td>
         <td>
-          <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-          <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+          <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Borrar</button>
         </td>
       `;
     } else {
@@ -525,13 +525,13 @@ function renderGastos(){
   for(const r of rows){
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escAttr(r.fecha||"")}</td>
+      <th scope="row">${escAttr(r.fecha||"")}</th>
       <td>${escAttr(r.concepto||"")}</td>
       <td>${escAttr(r.categoria||"")}</td>
       <td>${money(r.monto||0)}</td>
       <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Editar</button>
+        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Borrar</button>
       </td>`;
     tbody.appendChild(tr);
   }
@@ -676,7 +676,7 @@ function rendercxc(){
 
     if (!editing) {
       tr.innerHTML = `
-        <td>${escAttr(r.vence||"")}</td>
+        <th scope="row">${escAttr(r.vence||"")}</th>
         <td>${escAttr(r.nombre||"")}</td>
         <td>${escAttr(r.concepto||"")}</td>
         <td>${money(r.monto||0)}</td>
@@ -684,11 +684,11 @@ function rendercxc(){
         <td>
           ${
   String(r.estado || "").toLowerCase() !== "pagado"
-    ? `<button class="ghost" data-act="pay" data-id="${r.id}">Marcar pagado</button>`
+    ? `<button class="ghost" data-act="pay" data-id="${r.id}" aria-label="Marcar pagado ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Marcar pagado</button>`
     : ""
 }
-          <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-          <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+          <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxC ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxC ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Borrar</button>
         </td>
       `;
     } else {
@@ -746,14 +746,14 @@ function renderCxp(){
     const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
     tr.innerHTML = `
-      <td>${r.vence||""}</td>
+      <th scope="row">${escAttr(r.vence||"")}</th>
       <td>${r.proveedor||""}</td>
       <td>${r.concepto||""}</td>
       <td>${money(r.monto||0)}</td>
       <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
       <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
+        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
       </td>`;
     tbody.appendChild(tr);
   }
@@ -779,15 +779,15 @@ function renderInventario(){
     const low = Number(r.stock||0) <= Number(r.minimo||0);
     const tr=document.createElement("tr");
     tr.innerHTML = `
-      <td>${r.categoria||""}</td>
+      <th scope="row">${r.categoria||""}</th>
       <td>${r.producto||""}</td>
       <td>${Number(r.stock||0)}</td>
       <td>${Number(r.minimo||0)}</td>
       <td>${r.costo? money(r.costo): ""}</td>
       <td><span class="badge ${low?"due":"ok"}">${low?"Bajo stock":"OK"}</span></td>
       <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}">Borrar</button>
+        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Editar</button>
+        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Borrar</button>
       </td>`;
     tbody.appendChild(tr);
   }

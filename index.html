@@ -80,7 +80,7 @@
             </div>
             <div>
               <label>Fecha</label>
-              <input id="inFecha" type="date"/>
+              <input id="inFecha" type="date" required/>
             </div>
           </div>
           <div class="row">
@@ -90,7 +90,7 @@
             </div>
             <div>
               <label>Monto</label>
-              <input id="inMonto" type="number" inputmode="decimal" placeholder="0"/>
+              <input id="inMonto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" required/>
             </div>
           </div>
           <div class="row">
@@ -167,13 +167,13 @@
             </div>
             <div>
               <label>Fecha</label>
-              <input id="gaFecha" type="date"/>
+              <input id="gaFecha" type="date" required/>
             </div>
           </div>
           <div class="row">
             <div>
               <label>Monto</label>
-              <input id="gaMonto" type="number" inputmode="decimal" placeholder="0"/>
+              <input id="gaMonto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" required/>
             </div>
             <div>
               <label>Categoría</label>
@@ -235,7 +235,7 @@
             </div>
             <div>
               <label>Vencimiento</label>
-              <input id="cxcvence" type="date"/>
+              <input id="cxcvence" type="date" required/>
             </div>
           </div>
           <div class="row">
@@ -245,7 +245,7 @@
             </div>
             <div>
               <label>Monto</label>
-              <input id="cxcmonto" type="number" inputmode="decimal" placeholder="0"/>
+              <input id="cxcmonto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" required/>
             </div>
           </div>
           <div class="row">
@@ -313,7 +313,7 @@
             </div>
             <div>
               <label>Vencimiento</label>
-              <input id="cxpvence" type="date"/>
+              <input id="cxpvence" type="date" required/>
             </div>
           </div>
           <div class="row">
@@ -323,7 +323,7 @@
             </div>
             <div>
               <label>Monto</label>
-              <input id="cxpmonto" type="number" inputmode="decimal" placeholder="0"/>
+              <input id="cxpmonto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" required/>
             </div>
           </div>
           <div class="row">
@@ -396,15 +396,15 @@
           <div class="row3">
             <div>
               <label>Stock</label>
-              <input id="invStock" type="number" inputmode="numeric" placeholder="0"/>
+              <input id="invStock" type="number" inputmode="numeric" min="0" step="1" placeholder="0" required/>
             </div>
             <div>
               <label>Stock mínimo</label>
-              <input id="invMin" type="number" inputmode="numeric" placeholder="0"/>
+              <input id="invMin" type="number" inputmode="numeric" min="0" step="1" placeholder="0" required/>
             </div>
             <div>
               <label>Costo unitario (opcional)</label>
-              <input id="invCosto" type="number" inputmode="decimal" placeholder="0"/>
+              <input id="invCosto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"/>
             </div>
           </div>
           <div class="actions">
@@ -477,7 +477,7 @@
         <div class="row">
           <div>
             <label>Fecha ingreso</label>
-            <input id="alIngreso" type="date"/>
+            <input id="alIngreso" type="date" required/>
           </div>
           <div>
             <label>Programa</label>
@@ -492,7 +492,7 @@
         <div class="row">
           <div>
             <label>Cuota</label>
-            <input id="alCuota" type="number" inputmode="decimal" placeholder="0"/>
+            <input id="alCuota" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" required/>
           </div>
           <div>
             <label>Número ATA</label>

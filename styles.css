@@ -101,3 +101,31 @@ footer{
   backdrop-filter: blur(10px);
 }
 .footer-inner{max-width:1100px;margin:0 auto;padding:10px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+.app-alerts{
+  position:fixed;
+  top:10px; left:0; right:0;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  z-index:40;
+  pointer-events:none;
+  padding:0 12px;
+}
+.app-alert{
+  background: rgba(255,255,255,.12);
+  border:1px solid var(--border);
+  border-left:4px solid #f9d65c;
+  color:var(--text);
+  padding:10px 12px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  opacity:0;
+  transform: translateY(-6px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events:auto;
+  font-size:13px;
+}
+.app-alert.visible{
+  opacity:1;
+  transform: translateY(0);
+}

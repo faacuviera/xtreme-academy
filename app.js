@@ -127,7 +127,9 @@ function getActive() {
     gastos: [],
     pagos: [],
     asistencia: [],
-    cxc: []
+    cxc: [],
+    cxp: [],
+    inventario: []
   };
 
   // 🔥 MIGRACIÓN: datos viejos con Cxc → cxc
@@ -138,11 +140,13 @@ function getActive() {
 
   // asegurar arrays
   store[id].cxc ??= [];
+  store[id].cxp ??= [];
   store[id].ingresos ??= [];
   store[id].gastos ??= [];
   store[id].pagos ??= [];
   store[id].asistencia ??= [];
   store[id].alumnos ??= [];
+  store[id].inventario ??= [];
 
   xaSave(store);
   return store[id];
@@ -430,6 +434,9 @@ function persistActive(activeParam){
   active.updatedAt = Date.now();
   state.active = active;
 
+  // ✅ guardar también en localStorage para que el store activo quede en sync
+  saveActiveData(active);
+
   return dbPut("templates", active).then(async () => {
     state.templates = (await dbGetAll("templates"))
       .sort((a,b)=> String(a?.name || "").localeCompare(String(b?.name || "")));
@@ -461,11 +468,13 @@ function renderAll(){
   state.active = getActive();
 
   state.active.cxc ??= [];
+  state.active.cxp ??= [];
   state.active.ingresos ??= [];
   state.active.gastos ??= [];
   state.active.pagos ??= [];
   state.active.asistencia ??= [];
   state.active.alumnos ??= [];
+  state.active.inventario ??= [];
   $("activeTemplateLabel").textContent = "Plantilla: " + state.active.name;
   $("monthFilter").value = state.filters.month;
 

@@ -527,6 +527,8 @@ function renderIngresos(){
     const editing = (editMode.section === "ingresos" && editMode.id === r.id);
     const tr = document.createElement("tr");
 
+    if (editing) tr.classList.add("editing-row");
+
     if (!editing) {
       tr.innerHTML = `
         <th scope="row">${escAttr(r.fecha||"")}</th>
@@ -536,7 +538,7 @@ function renderIngresos(){
         <td>${escAttr(r.medio||"")}</td>
         <td><span class="badge ${r.estado==="Pagado"?"ok":""}">${escAttr(r.estado||"")}</span></td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar ingreso ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Borrar</button>
         </td>
@@ -556,7 +558,7 @@ function renderIngresos(){
           </select>
         </td>
         <td><textarea id="ed_ing_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
         </td>
@@ -595,6 +597,9 @@ function renderGastos(){
   for(const r of rows){
     const editing = (editMode.section === "gastos" && editMode.id === r.id);
     const tr = document.createElement("tr");
+
+    if (editing) tr.classList.add("editing-row");
+
     if (!editing) {
       tr.innerHTML = `
         <th scope="row">${escAttr(r.fecha||"")}</th>
@@ -602,7 +607,7 @@ function renderGastos(){
         <td>${escAttr(r.categoria||"")}</td>
         <td>${money(r.monto||0)}</td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar egreso ${escAttr(r.concepto||"")} del ${escAttr(r.fecha||"")}">Borrar</button>
         </td>`;
@@ -613,7 +618,7 @@ function renderGastos(){
         <td><input id="ed_gas_categoria_${r.id}" value="${escAttr(r.categoria||"")}" /></td>
         <td><input id="ed_gas_monto_${r.id}" type="number" min="0" step="1" value="${escAttr(r.monto ?? 0)}" /></td>
         <td><textarea id="ed_gas_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
         </td>`;
@@ -796,6 +801,8 @@ function rendercxc(){
 
     const tr = document.createElement("tr");
 
+    if (editing) tr.classList.add("editing-row");
+
     if (!editing) {
       tr.innerHTML = `
         <th scope="row">${escAttr(r.vence||"")}</th>
@@ -804,7 +811,7 @@ function rendercxc(){
         <td>${money(r.monto||0)}</td>
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
-        <td>
+        <td class="actions-cell">
           ${
   String(r.estado || "").toLowerCase() !== "pagado"
     ? `<button class="ghost" data-act="pay" data-id="${r.id}" aria-label="Marcar pagado ${escAttr(r.concepto||"")} de ${escAttr(r.nombre||"")}">Marcar pagado</button>`
@@ -828,7 +835,7 @@ function rendercxc(){
           </select>
         </td>
         <td><textarea id="ed_cxc_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
         </td>
@@ -870,6 +877,9 @@ function renderCxp(){
     const overdue = r.estado!=="Pagado" && r.vence && r.vence < now;
     const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
+
+    if (editing) tr.classList.add("editing-row");
+
     if (!editing) {
       tr.innerHTML = `
         <th scope="row">${escAttr(r.vence||"")}</th>
@@ -878,7 +888,7 @@ function renderCxp(){
         <td>${money(r.monto||0)}</td>
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
         </td>`;
@@ -895,7 +905,7 @@ function renderCxp(){
           </select>
         </td>
         <td><textarea id="ed_cxp_notas_${r.id}">${escAttr(r.notas||"")}</textarea></td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
           <button class="ghost" data-act="cancel">Cancelar</button>
         </td>`;

@@ -910,26 +910,44 @@ function renderInventario(){
   for(const r of rows){
     const low = Number(r.stock||0) <= Number(r.minimo||0);
     const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <th scope="row">${r.categoria||""}</th>
-      <td>${r.producto||""}</td>
-      <td>${Number(r.stock||0)}</td>
-      <td>${Number(r.minimo||0)}</td>
-      <td>${r.costo? money(r.costo): ""}</td>
-      <td><span class="badge ${low?"due":"ok"}">${low?"Bajo stock":"OK"}</span></td>
-      <td>
-        <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Editar</button>
-        <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Borrar</button>
-      </td>`;
+    const editing = isEditing("inventario", r.id);
+    if (!editing) {
+      tr.innerHTML = `
+        <th scope="row">${r.categoria||""}</th>
+        <td>${r.producto||""}</td>
+        <td>${Number(r.stock||0)}</td>
+        <td>${Number(r.minimo||0)}</td>
+        <td>${r.costo? money(r.costo): ""}</td>
+        <td><span class="badge ${low?"due":"ok"}">${low?"Bajo stock":"OK"}</span></td>
+        <td>
+          <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Editar</button>
+          <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar inventario ${escAttr(r.producto||"")} en ${escAttr(r.categoria||"")}">Borrar</button>
+        </td>`;
+    } else {
+      tr.innerHTML = `
+        <td><input id="ed_inv_categoria_${r.id}" value="${escAttr(r.categoria||"")}" /></td>
+        <td><input id="ed_inv_producto_${r.id}" value="${escAttr(r.producto||"")}" /></td>
+        <td><input id="ed_inv_stock_${r.id}" type="number" min="0" step="1" value="${escAttr(r.stock ?? 0)}" /></td>
+        <td><input id="ed_inv_minimo_${r.id}" type="number" min="0" step="1" value="${escAttr(r.minimo ?? 0)}" /></td>
+        <td><input id="ed_inv_costo_${r.id}" type="number" min="0" step="0.01" value="${r.costo ?? ""}" /></td>
+        <td><span class="badge ${low?"due":"ok"}">${low?"Bajo stock":"OK"}</span></td>
+        <td>
+          <button class="ghost" data-act="save" data-id="${r.id}">Guardar</button>
+          <button class="ghost" data-act="cancel">Cancelar</button>
+        </td>`;
+    }
     tbody.appendChild(tr);
   }
-  tbody.querySelectorAll("button").forEach(b=>{
-    b.addEventListener("click", ()=>{
-      const id=b.dataset.id; const act=b.dataset.act;
-      if(act==="del"){ delRow("inventario", id); }
-      if(act==="edit"){ loadInv(id); }
-    });
-  });
+  tbody.onclick = (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+
+    const { act, id } = btn.dataset;
+    if (act === "del") delRow("inventario", id);
+    else if (act === "edit") editInventario(id);
+    else if (act === "save") saveInventario(id);
+    else if (act === "cancel") cancelEdit();
+  };
 }
 
 /* ---------- CRUD helpers ---------- */
@@ -1075,6 +1093,37 @@ function clearInvForm(){
   delete $("saveInvBtn").dataset.editId;
   $("saveInvBtn").textContent="Guardar";
 }
+function editInventario(id) {
+  startEdit("inventario", id);
+}
+function saveInventario(id) {
+  const categoria = document.getElementById(`ed_inv_categoria_${id}`)?.value.trim() || "";
+  const producto  = document.getElementById(`ed_inv_producto_${id}`)?.value.trim() || "";
+  const stockStr  = document.getElementById(`ed_inv_stock_${id}`)?.value || "0";
+  const minimoStr = document.getElementById(`ed_inv_minimo_${id}`)?.value || "0";
+  const costoStr  = document.getElementById(`ed_inv_costo_${id}`)?.value ?? "";
+
+  const stock = Number(stockStr);
+  const minimo = Number(minimoStr);
+  const costo = costoStr === "" ? null : Number(costoStr);
+
+  if (!categoria || !producto) return alert("Poné categoría y producto.");
+  if (Number.isNaN(stock) || stock < 0) return alert("El stock tiene que ser un número válido.");
+  if (Number.isNaN(minimo) || minimo < 0) return alert("El mínimo tiene que ser un número válido.");
+  if (costo !== null && (Number.isNaN(costo) || costo < 0)) return alert("El costo tiene que ser un número válido.");
+
+  const active = getActive();
+  active.inventario = (active.inventario || []).map(item =>
+    item.id === id ? { ...item, categoria, producto, stock, minimo, costo } : item
+  );
+
+  setActive(active);
+  persistActive(active);
+  editMode = { section: null, id: null };
+  render();
+}
+window.editInventario = editInventario;
+window.saveInventario = saveInventario;
 function markCxcPaid(id) {
   log.info("🔥 markCxcPaid ejecutándose", { id });
 

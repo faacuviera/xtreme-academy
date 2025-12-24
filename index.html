@@ -10,7 +10,37 @@
   <link rel="apple-touch-icon" href="icon-192.png"/>
   <link rel="stylesheet" href="styles.css"/>
 </head>
+
 <body>
+
+<!-- ===================== -->
+<!-- LOGIN / REGISTRO -->
+<!-- ===================== -->
+<div id="authScreen" style="max-width:420px;margin:40px auto;padding:16px;border:1px solid #333;border-radius:12px;display:none">
+  <h2>Ingresar</h2>
+
+  <input id="authEmail" type="email" placeholder="Email"
+    style="width:100%;padding:10px;margin:6px 0">
+
+  <input id="authPass" type="password" placeholder="Contraseña"
+    style="width:100%;padding:10px;margin:6px 0">
+
+  <button id="btnLogin" style="width:100%;padding:10px;margin-top:8px">
+    Ingresar
+  </button>
+
+  <button id="btnRegister" style="width:100%;padding:10px;margin-top:6px">
+    Crear cuenta
+  </button>
+
+  <p id="authMsg" style="margin-top:10px;opacity:.8"></p>
+</div>
+
+<!-- ===================== -->
+<!-- APP (OCULTA HASTA LOGIN) -->
+<!-- ===================== -->
+<div id="appScreen" style="display:none">
+
 <header>
   <div class="header-inner">
     <div class="brand">
@@ -30,6 +60,12 @@
       <button data-tab="alumnos">Alumnos</button>
       <button data-tab="plantillas">Plantillas</button>
     </div>
+  </div>
+
+  <!-- USUARIO LOGUEADO -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px">
+    <span id="userBadge" class="small"></span>
+    <button id="btnLogout" class="ghost">Salir</button>
   </div>
 </header>
 
@@ -592,12 +628,9 @@
 </main>
 
 <footer>
-  <div class="footer-inner">
-    <div class="small">Datos guardados en el iPhone (sin internet). Hacé respaldos seguido.</div>
-    <div class="small">v2 — Xtreme Academy</div>
-  </div>
-</footer>
+  </div> <!-- CIERRE appScreen -->
 
-<script src="./app.js?v=145"></script>
+<script type="module" src="./app.js?v=145"></script>
 </body>
 </html>
+

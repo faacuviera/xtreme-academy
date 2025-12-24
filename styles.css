@@ -96,6 +96,15 @@ tr:hover td{background: rgba(255,255,255,.03);}
 .note-text{white-space:pre-line;font-size:12px;color:var(--muted);}
 .note-empty{color:rgba(255,255,255,.3);font-size:12px;}
 .note-cell{min-width:160px;}
+.actions-cell{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+.actions-cell button{
+  flex:1 1 auto;
+}
 .small{font-size:12px;color:var(--muted);}
 footer{
   position:fixed; bottom:0; left:0; right:0; z-index:25;
@@ -131,4 +140,34 @@ footer{
 .app-alert.visible{
   opacity:1;
   transform: translateY(0);
+}
+
+/* Mejoras de edición en mobile: que textarea y botones no se superpongan */
+@media(max-width:780px){
+  table{min-width:0;}
+  .table-wrap{overflow-x:auto;}
+  tr.editing-row{
+    display:block;
+    padding:8px 6px;
+    margin:6px 0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background: rgba(255,255,255,.04);
+  }
+  tr.editing-row > td,
+  tr.editing-row > th{
+    display:block;
+    width:100%;
+    padding:8px 0;
+  }
+  tr.editing-row textarea{
+    min-height:120px;
+  }
+  tr.editing-row .actions-cell{
+    display:flex;
+    gap:8px;
+  }
+  tr.editing-row .actions-cell button{
+    flex:1 1 140px;
+  }
 }

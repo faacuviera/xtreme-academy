@@ -2,6 +2,16 @@
  *  - Guardado local en IndexedDB
  *  - Plantillas (meses) con tablas: ingresos, gastos, cxc, cxp, inventario
  */
+import {
+  money,
+  todayISO,
+  monthISO,
+  uid,
+  csvEscape,
+  toCSV,
+  download
+} from "./utils.js";
+
 const $ = (id)=>document.getElementById(id);
 // 🔎 DEBUG: mostrar errores en pantalla (iPhone friendly)
 window.addEventListener("error", (e) => {
@@ -420,27 +430,6 @@ function textMatch(obj, q){
   if(!q) return true;
   const s = JSON.stringify(obj).toLowerCase();
   return s.includes(q.toLowerCase());
-}
-
-function csvEscape(v){
-  const s = (v===null||v===undefined) ? "" : String(v);
-  if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-  return s;
-}
-
-function download(filename, blob){
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 2000);
-}
-
-function toCSV(rows, headers){
-  const head = headers.map(csvEscape).join(",") + "\n";
-  const body = rows.map(r=>headers.map(h=>csvEscape(r[h])).join(",")).join("\n");
-  return head + body + "\n";
 }
 
 /* ---------- Rendering ---------- */

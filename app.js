@@ -1502,10 +1502,6 @@ function cancelEdit() {
 }
 
 // Tu botón actual llama editAlumno(id)
-function editAlumno(id) {
-  startEdit("alumnos", id);
-}
-
 // Para no romper HTML con comillas, etc.
 function escAttr(v) {
   return String(v ?? "")

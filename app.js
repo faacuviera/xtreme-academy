@@ -899,9 +899,6 @@ function clearGastoForm(){
   $("addGastoBtn").textContent="Guardar egreso";
 }
 function loadCxc(id){
-  window.loadcxc = (id) => editCxc(id);M
-window.loadCxc = (id) => editCxc(id);
-
   const r=(state.active.cxc||[]).find(x=>x.id===id); if(!r) return;
   $("cxcnombre").value=r.nombre||"";
   $("cxcvence").value=r.vence||todayISO();
@@ -1131,8 +1128,12 @@ function wireActions(){
 
 
 
- const btnClearCxc = $("clearcxcBtn");
-if (btnClearCxc) btnClearCxc.addEventListener("click", clearcxcForm);
+const btnClearGasto = $("clearGastoBtn");
+if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
+
+
+const btnClearCxc = $("clearcxcBtn");
+if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
 
 const btnAddCxp = $("addCxpBtn");
 if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 
@@ -1639,7 +1640,7 @@ function editAlumno(id){
   $("addAlumnoBtn").textContent = "Actualizar alumno";
 }
 
-function deleteAlumno(id){
+const deleteAlumnoImpl = (id) => {
   if(!confirm("¿Borrar alumno? Esto también elimina sus cuentas por cobrar.")) return;
 
   const active = getActive?.() || state?.active;
@@ -1682,8 +1683,8 @@ function deleteAlumno(id){
   if (typeof renderAlumnos === "function") renderAlumnos();
   if (typeof rendercxc === "function") rendercxc();
   if (typeof renderResumen === "function") renderResumen();
-}
-window.deleteAlumno = deleteAlumno;
+};
+window.deleteAlumno = deleteAlumnoImpl;
 
 
 

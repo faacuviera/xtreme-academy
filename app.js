@@ -22,6 +22,49 @@ window.addEventListener("unhandledrejection", (e) => {
   alert("PROMISE ERROR: " + (e.reason?.message || JSON.stringify(e.reason) || String(e.reason) || "unknown"));
 });
 
+const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(Number(n||0));
+const todayISO = ()=> new Date().toISOString().slice(0,10);
+const monthISO = (d)=> (d||new Date()).toISOString().slice(0,7);
+const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
+
+/* ---------- Logging & non-fatal notifications ---------- */
+function createLogger(scope) {
+  const prefix = `[${scope}]`;
+  const emit = (level, ...args) => {
+    const fn = console[level] || console.log;
+    fn.call(console, prefix, ...args);
+  };
+  return {
+    info: (...args) => emit("info", ...args),
+    warn: (...args) => emit("warn", ...args),
+    error: (...args) => emit("error", ...args)
+  };
+}
+
+const log = createLogger("XA");
+const storageStats = { failures: 0 };
+
+function showSoftBanner(message) {
+  const host = document.getElementById("appAlerts");
+  if (!host || !message) return;
+
+  const el = document.createElement("div");
+  el.className = "app-alert";
+  el.textContent = message;
+  host.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("visible"));
+  setTimeout(() => {
+    el.classList.remove("visible");
+    setTimeout(() => el.remove(), 200);
+  }, 5200);
+}
+
+function recordStorageFailure(context, err) {
+  storageStats.failures += 1;
+  log.warn(`Fallo de almacenamiento (#${storageStats.failures}) en ${context}`, err);
+  showSoftBanner("⚠️ Problema guardando datos locales. Revisá tu navegador.");
+}
+
 // ===== MODO EDICIÓN (GLOBAL) =====
 let editMode = {
   section: null, // "alumnos" | "cxc" | "ingresos" | "egresos"
@@ -34,11 +77,18 @@ const XA_ACTIVE_KEY = "xa_active_v1";
 
 function xaLoad() {
   try { return JSON.parse(localStorage.getItem(XA_STORE_KEY)) || {}; }
-  catch { return {}; }
+  catch (err) {
+    recordStorageFailure("lectura localStorage", err);
+    return {};
+  }
 }
 
 function xaSave(store) {
-  localStorage.setItem(XA_STORE_KEY, JSON.stringify(store || {}));
+  try {
+    localStorage.setItem(XA_STORE_KEY, JSON.stringify(store || {}));
+  } catch (err) {
+    recordStorageFailure("escritura localStorage", err);
+  }
 }
 
 function getActiveId() {
@@ -157,7 +207,10 @@ function openDB(){
     };
 
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => {
+      recordStorageFailure("apertura IndexedDB", req.error);
+      reject(req.error);
+    };
   });
 }
 
@@ -905,7 +958,7 @@ function clearInvForm(){
   $("saveInvBtn").textContent="Guardar";
 }
 function markCxcPaid(id) {
-  console.log("🔥 markCxcPaid ejecutándose con id:", id);
+  log.info("🔥 markCxcPaid ejecutándose", { id });
 
   const active = getActive();
 
@@ -915,13 +968,13 @@ function markCxcPaid(id) {
 
   const idx = active.cxc.findIndex(c => c.id === id);
   if (idx < 0) {
-    console.warn("❌ No se encontró la CxC con id:", id);
+    log.warn("❌ No se encontró la CxC", { id });
     return;
   }
 
   // confirmación CORRECTA
   const ok = confirm("Marcar como pagado y crear ingreso automáticamente?");
-  console.log("confirm result:", ok);
+  log.info("Confirmación de pago de CxC", { ok });
   if (!ok) return;
 
   // marcar como pagado
@@ -948,7 +1001,7 @@ function markCxcPaid(id) {
   // refrescar todo
 renderAll();
 
-  console.log("✅ CxC marcada como pagada correctamente:", id);
+  log.info("✅ CxC marcada como pagada correctamente", { id });
 }
 
 window.markCxcPaid = markCxcPaid;
@@ -991,11 +1044,11 @@ function deleteAlumno(id) {
 
   if (!confirm("¿Borrar alumno?")) return;
 
-  console.log("BORRANDO ALUMNO", id, active.alumnos);
+  log.info("Borrando alumno", { id, total: (active.alumnos || []).length });
 
   active.alumnos = (active.alumnos || []).filter(a => a.id !== id);
 
-  console.log("RESULTADO", active.alumnos);
+  log.info("Alumnos restantes", { total: (active.alumnos || []).length });
 
   saveActiveData(active);
   state.active = active;
@@ -1240,7 +1293,7 @@ if (nac) {
   });
 }
     } catch (err) {
-    console.error("wireActions error:", err);
+    log.error("wireActions error:", err);
     alert("Error interno en la app. Revisá consola.");
   }
 }
@@ -1579,12 +1632,12 @@ else active.alumnos.push(alumno);
 addCuotaPendiente(active, alumno);
 
 
-console.log("CxC en memoria (active.cxc):", active.cxc?.length, active.cxc);
+log.info("CxC en memoria (active.cxc)", { cantidad: active.cxc?.length });
 
 saveActiveData(active);
 
 const fresh = getActive();
-console.log("CxC leida desde getActive():", (fresh.cxc ? fresh.cxc.length : 0), fresh.cxc);
+log.info("CxC leída desde getActive()", { cantidad: fresh.cxc ? fresh.cxc.length : 0 });
 
 state.active = active;
 
@@ -1652,7 +1705,7 @@ function deleteAlumno(id){
   });
 
   const after = (active.cxc || []).length;
-  console.log("CxC borradas:", before - after);
+  log.info("CxC borradas junto con alumno", { eliminadas: before - after });
 
   saveActiveData(active);
   state.active = active;

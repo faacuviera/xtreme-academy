@@ -779,7 +779,8 @@ function rendercxc(){
     .filter(x => !q || textMatch(q, x))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 
-  $("cxcCount").textContent = String(rows.length);
+  const pendingCount = rows.filter(r => String(r.estado || "").toLowerCase() !== "pagado").length;
+  $("cxcCount").textContent = String(pendingCount);
 
   const tbody = $("cxcTbody");
   tbody.innerHTML = "";

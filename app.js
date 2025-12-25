@@ -781,7 +781,7 @@ function rendercxc(){
   const active = state.active ?? getActive();
 
   const rows = (active.cxc || [])
-    .filter(x => !q || textMatch(q, x))
+    .filter(x => !q || textMatch(x, q))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 
   const pendingCount = rows.filter(r => String(r.estado || "").toLowerCase() !== "pagado").length;
@@ -1336,8 +1336,45 @@ const btnClearGasto = $("clearGastoBtn");
 if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
 
 
-const btnClearCxc = $("clearcxcBtn");
+const btnClearCxc = $("clearCxcBtn");
 if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
+
+const btnAddCxc = $("addCxcBtn");
+if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
+  const monto = Number($("cxcmonto").value || 0);
+  const editId = btnAddCxc.dataset.editId || null;
+
+  const data = {
+    id: editId || uid(),
+    nombre: $("cxcnombre").value.trim(),
+    vence: $("cxcvence").value || todayISO(),
+    concepto: $("cxcconcepto").value.trim(),
+    monto,
+    estado: $("cxcestado").value || "Pendiente",
+    notas: $("cxcnotas").value.trim()
+  };
+
+  if (!data.nombre) { alert("Poné el alumno/cliente."); return; }
+  if (!data.concepto) { alert("Poné el concepto."); return; }
+  if (Number.isNaN(monto) || monto < 0) { alert("El monto tiene que ser un número válido."); return; }
+
+  const active = getActive();
+  active.cxc ??= [];
+
+  if (editId) {
+    const idx = active.cxc.findIndex(c => c.id === editId);
+    if (idx === -1) { alert("No encontré esa cuenta por cobrar."); return; }
+    active.cxc[idx] = { ...active.cxc[idx], ...data };
+  } else {
+    active.cxc.push(data);
+  }
+
+  setActive(active);
+  state.active = active;
+  await persistActive(active);
+  clearCxcForm();
+  renderAll();
+});
 
 const btnAddCxp = $("addCxpBtn");
 if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 

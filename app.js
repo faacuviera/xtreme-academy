@@ -284,6 +284,14 @@ let state = {
   filters: { month: monthISO(), search: "" }
 };
 
+function getTemplateName(tpl) {
+  return String(tpl?.name || tpl?.nombre || "").trim();
+}
+
+function sortTemplates(list) {
+  return (list || []).sort((a, b) => getTemplateName(a).localeCompare(getTemplateName(b)));
+}
+
 function emptyTemplate(name){
   return {
     id: uid(),
@@ -319,10 +327,7 @@ async function init(){
 
   // Load templates
   const templates = await dbGetAll("templates");
-  state.templates = (templates || []).sort(
-    (a,b)=> String(a?.name || a?.nombre || "")
-      .localeCompare(String(b?.name || b?.nombre || ""))
-  );
+  state.templates = sortTemplates(templates);
 
   // Create first template if none
   if (state.templates.length === 0) {
@@ -438,8 +443,7 @@ function persistActive(activeParam){
   saveActiveData(active);
 
   return dbPut("templates", active).then(async () => {
-    state.templates = (await dbGetAll("templates"))
-      .sort((a,b)=> String(a?.name || "").localeCompare(String(b?.name || "")));
+    state.templates = sortTemplates(await dbGetAll("templates"));
 
     refreshTemplateSelectors();
   });
@@ -1401,7 +1405,7 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
     if(state.templates.some(t=>t.name===name)){ alert("Ya existe una plantilla con ese nombre."); return; }
     const t=emptyTemplate(name);
     await dbPut("templates", t);
-    state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
+    state.templates = sortTemplates(await dbGetAll("templates"));
     setActiveTemplate(t.id);
     $("tplName").value="";
     refreshTemplateSelectors();
@@ -1443,7 +1447,7 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
   saveActiveData(monthData);
 
   // 6) recargar lista de plantillas y activar la nueva
-  state.templates = (await dbGetAll("templates")).sort((a, b) => a.name.localeCompare(b.name));
+  state.templates = sortTemplates(await dbGetAll("templates"));
   refreshTemplateSelectors();
   setActiveTemplate(newTpl.id);
 
@@ -1470,9 +1474,9 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
       xaSave(store);
     }
 
-    state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
+    state.templates = sortTemplates(await dbGetAll("templates"));
     const next = state.templates[state.templates.length-1];
-    setActiveTemplate(next.id);
+    if (next) setActiveTemplate(next.id);
   });
 
   // Export/Import backups
@@ -1602,7 +1606,7 @@ async function importBackup(e){
     for(const t of byName.values()){
       await dbPut("templates", t);
     }
-    state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
+    state.templates = sortTemplates(await dbGetAll("templates"));
     // Keep current active if possible
     const still = state.templates.find(t=>t.id===state.activeTemplateId) || state.templates[state.templates.length-1];
     setActiveTemplate(still.id);

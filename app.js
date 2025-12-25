@@ -1052,15 +1052,15 @@ function loadCxc(id){
   $("cxcmonto").value=r.monto||"";
   $("cxcestado").value=r.estado||"Pendiente";
   $("cxcnotas").value=r.notas||"";
-  $("addcxcBtn").dataset.editId=id;
-  $("addcxcBtn").textContent="Actualizar";
+  $("addCxcBtn").dataset.editId=id;
+  $("addCxcBtn").textContent="Actualizar";
 }
 function clearCxcForm(){
   ["cxcnombre","cxcconcepto","cxcmonto","cxcnotas"].forEach(id=>$(id).value="");
   $("cxcvence").value=todayISO();
   $("cxcestado").value="Pendiente";
-  delete $("addcxcBtn").dataset.editId;
-  $("addcxcBtn").textContent="Guardar";
+  delete $("addCxcBtn").dataset.editId;
+  $("addCxcBtn").textContent="Guardar";
 }
 function loadCxp(id){
   const r=(state.active.cxp||[]).find(x=>x.id===id); if(!r) return;
@@ -1336,10 +1336,10 @@ const btnClearGasto = $("clearGastoBtn");
 if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
 
 
-const btnClearCxc = $("clearcxcBtn");
+const btnClearCxc = $("clearCxcBtn");
 if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
 
-const btnAddCxc = $("addcxcBtn");
+const btnAddCxc = $("addCxcBtn");
 if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
   const monto = Number($("cxcmonto").value || 0);
   const data = {

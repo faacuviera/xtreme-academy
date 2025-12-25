@@ -16,7 +16,7 @@ const $ = (id)=>document.getElementById(id);
 const TAB_VISUALS = {
   dashboard: { src: "./assets/hero-ingresos.svg", alt: "Resumen" },
   ingresos: { src: "./assets/hero-ingresos.svg", alt: "Ingresos" },
-  gastos: { src: "./assets/hero-ingresos.svg", alt: "Egresos" },
+  gastos: { src: "./assets/hero-gastos.svg", alt: "Egresos" },
   cxc: { src: "./assets/hero-cxc.svg", alt: "Cuentas por cobrar" },
   cxp: { src: "./assets/hero-cxc.svg", alt: "Cuentas por pagar" },
   inventario: { src: "./assets/hero-ingresos.svg", alt: "Inventario" },

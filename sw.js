@@ -1,4 +1,4 @@
-const CACHE_NAME = "xtreme-cuentas-v4";
+const CACHE_NAME = "xtreme-cuentas-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,11 @@ const ASSETS = [
   "./utils.js",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./assets/hero-ingresos.svg",
+  "./assets/hero-cxc.svg",
+  "./assets/hero-alumnos.svg",
+  "./assets/hero-gastos.svg"
 ];
 self.addEventListener("install",(e)=>{
   e.waitUntil((async()=>{

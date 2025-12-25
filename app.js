@@ -13,6 +13,16 @@ import {
 } from "./utils.js";
 
 const $ = (id)=>document.getElementById(id);
+const TAB_VISUALS = {
+  dashboard: { src: "./assets/hero-ingresos.svg", alt: "Resumen" },
+  ingresos: { src: "./assets/hero-ingresos.svg", alt: "Ingresos" },
+  gastos: { src: "./assets/hero-ingresos.svg", alt: "Egresos" },
+  cxc: { src: "./assets/hero-cxc.svg", alt: "Cuentas por cobrar" },
+  cxp: { src: "./assets/hero-cxc.svg", alt: "Cuentas por pagar" },
+  inventario: { src: "./assets/hero-ingresos.svg", alt: "Inventario" },
+  alumnos: { src: "./assets/hero-alumnos.svg", alt: "Alumnos" },
+  plantillas: { src: "./assets/hero-alumnos.svg", alt: "Plantillas" }
+};
 
 /* ---------- Logging & non-fatal notifications ---------- */
 function createLogger(scope) {
@@ -362,6 +372,7 @@ async function init(){
   // UI wiring
   wireTabs();
   wireActions();
+  updateTabHero(document.querySelector(".nav button.active")?.dataset.tab || "dashboard");
 
   // Render
   refreshTemplateSelectors();
@@ -402,6 +413,16 @@ function setActiveTemplate(id){
 }
 
 /* ---------- Tabs ---------- */
+function updateTabHero(tab){
+  const hero = $("tabHero");
+  const img = $("tabHeroImg");
+  if (!hero || !img) return;
+
+  const visual = TAB_VISUALS[tab] || TAB_VISUALS.dashboard;
+  img.src = visual.src;
+  img.alt = `Ilustración de ${visual.alt || "la sección"}`;
+}
+
 function wireTabs(){
   document.querySelectorAll(".nav button").forEach(btn=>{
     btn.addEventListener("click", ()=>{
@@ -410,6 +431,7 @@ function wireTabs(){
       const tab=btn.dataset.tab;
       document.querySelectorAll(".tab").forEach(s=>s.hidden=true);
       $("tab-"+tab).hidden=false;
+      updateTabHero(tab);
     });
   });
 }

@@ -781,7 +781,7 @@ function rendercxc(){
   const active = state.active ?? getActive();
 
   const rows = (active.cxc || [])
-    .filter(x => !q || textMatch(q, x))
+    .filter(x => !q || textMatch(x, q))
     .sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
 
   const pendingCount = rows.filter(r => String(r.estado || "").toLowerCase() !== "pagado").length;
@@ -1338,6 +1338,29 @@ if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
 
 const btnClearCxc = $("clearcxcBtn");
 if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
+
+const btnAddCxc = $("addcxcBtn");
+if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
+  const monto = Number($("cxcmonto").value || 0);
+  const data = {
+    id: btnAddCxc.dataset.editId || uid(),
+    nombre: $("cxcnombre").value.trim(),
+    vence: $("cxcvence").value || todayISO(),
+    concepto: $("cxcconcepto").value.trim(),
+    monto,
+    estado: $("cxcestado").value || "Pendiente",
+    notas: $("cxcnotas").value.trim()
+  };
+
+  if (!data.nombre) { alert("Poné el alumno/cliente."); return; }
+  if (!data.concepto) { alert("Poné el concepto."); return; }
+  if (Number.isNaN(monto) || monto < 0) { alert("El monto tiene que ser un número válido."); return; }
+
+  upsert("cxc", data, btnAddCxc.dataset.editId);
+  await persistActive();
+  clearCxcForm();
+  renderAll();
+});
 
 const btnAddCxp = $("addCxpBtn");
 if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 

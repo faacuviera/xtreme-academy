@@ -1455,9 +1455,21 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
 
   $("deleteTplBtn").addEventListener("click", async()=>{
     if(state.templates.length<=1){ alert("Tenés que dejar al menos una plantilla."); return; }
-    const t=state.active;
-    if(!confirm(`¿Borrar la plantilla "${t.name}"? (No se puede deshacer)`)) return;
-    await dbDelete("templates", t.id);
+    const activeId = state.activeTemplateId;
+    const tplMeta = state.templates.find(t => t.id === activeId) || state.active;
+    const tplName = tplMeta?.name || "esta plantilla";
+
+    if(!confirm(`¿Borrar la plantilla "${tplName}"? (No se puede deshacer)`)) return;
+
+    await dbDelete("templates", activeId);
+
+    // limpiar datos locales asociados en localStorage
+    const store = xaLoad();
+    if (store && Object.prototype.hasOwnProperty.call(store, activeId)) {
+      delete store[activeId];
+      xaSave(store);
+    }
+
     state.templates = (await dbGetAll("templates")).sort((a,b)=>a.name.localeCompare(b.name));
     const next = state.templates[state.templates.length-1];
     setActiveTemplate(next.id);

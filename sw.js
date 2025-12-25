@@ -1,4 +1,4 @@
-const CACHE_NAME = "xtreme-cuentas-v5";
+const CACHE_NAME = "xtreme-cuentas-v6";
 const ASSETS = [
   "./",
   "./index.html",

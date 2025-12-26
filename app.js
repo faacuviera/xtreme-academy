@@ -131,6 +131,11 @@ function getActive() {
     inventario: []
   };
 
+  const tplName = getTemplateName(state?.templates?.find((t) => t.id === id)) || store[id].name || id;
+  if (tplName) {
+    store[id].name = tplName;
+  }
+
   // 🔥 MIGRACIÓN: datos viejos con Cxc → cxc
   if (store[id].Cxc && !store[id].cxc) {
     store[id].cxc = store[id].Cxc;

@@ -361,6 +361,7 @@ async function init(){
   // UI wiring
   wireTabs();
   wireActions();
+  updateTabHero(document.querySelector(".nav button.active")?.dataset.tab || "dashboard");
 
   // Render
   refreshTemplateSelectors();
@@ -401,6 +402,14 @@ function setActiveTemplate(id){
 }
 
 /* ---------- Tabs ---------- */
+function updateTabHero(tab){
+  const hero = $("tabHero");
+  if (!hero) return;
+
+  const visual = TAB_VISUALS[tab] || TAB_VISUALS.dashboard;
+  hero.style.setProperty("--hero-image", `url("${visual.src}")`);
+}
+
 function wireTabs(){
   document.querySelectorAll(".nav button").forEach(btn=>{
     btn.addEventListener("click", ()=>{
@@ -409,6 +418,7 @@ function wireTabs(){
       const tab=btn.dataset.tab;
       document.querySelectorAll(".tab").forEach(s=>s.hidden=true);
       $("tab-"+tab).hidden=false;
+      updateTabHero(tab);
     });
   });
 }

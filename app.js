@@ -470,6 +470,104 @@ function textMatch(obj, q){
   return s.includes(q.toLowerCase());
 }
 
+function collectGlobalSearchHits(query){
+  const term = (query || "").trim();
+  if (!term) return [];
+
+  const store = xaLoad() || {};
+  const templates = state.templates?.length ? state.templates : [];
+  const tplList = templates.length ? templates : Object.keys(store || {}).map(id => ({ id, name: id }));
+  const ensureArray = (arr) => Array.isArray(arr) ? arr : [];
+
+  const sections = [
+    {
+      key: "ingresos",
+      label: "Ingreso",
+      dateKey: "fecha",
+      amountKey: "monto",
+      title: (r) => r.nombre || r.concepto || "Ingreso",
+      subtitle: (r) => r.concepto || r.medio || ""
+    },
+    {
+      key: "gastos",
+      label: "Egreso",
+      dateKey: "fecha",
+      amountKey: "monto",
+      title: (r) => r.concepto || "Egreso",
+      subtitle: (r) => r.categoria || ""
+    },
+    {
+      key: "cxc",
+      label: "Por cobrar",
+      dateKey: "vence",
+      amountKey: "monto",
+      title: (r) => r.nombre || r.concepto || "Por cobrar",
+      subtitle: (r) => r.concepto || ""
+    },
+    {
+      key: "cxp",
+      label: "Por pagar",
+      dateKey: "vence",
+      amountKey: "monto",
+      title: (r) => r.proveedor || r.concepto || "Por pagar",
+      subtitle: (r) => r.concepto || ""
+    },
+    {
+      key: "inventario",
+      label: "Inventario",
+      dateKey: "",
+      amountKey: null,
+      title: (r) => r.producto || r.categoria || "Inventario",
+      subtitle: (r) => {
+        const stock = r.stock ?? "";
+        const min = r.minimo ?? "";
+        if (stock === "" && min === "") return "";
+        return `Stock: ${stock}${min !== "" ? ` (mín ${min})` : ""}`;
+      }
+    },
+    {
+      key: "alumnos",
+      label: "Alumno",
+      dateKey: "",
+      amountKey: null,
+      title: (r) => r.nombre || "Alumno",
+      subtitle: (r) => r.programa || (r.cuota ? `Cuota: ${money(Number(r.cuota) || 0)}` : "")
+    }
+  ];
+
+  const hits = [];
+
+  for (const tpl of tplList) {
+    const tplData = store?.[tpl.id] || tpl || {};
+    const tplName = getTemplateName(tpl) || tplData.name || tpl.id || "Plantilla";
+
+    for (const section of sections) {
+      const rows = ensureArray(tplData[section.key]);
+      for (const row of rows) {
+        const searchable = { ...row, plantilla: tplName };
+        if (!textMatch(searchable, term)) continue;
+
+        const amount = section.amountKey !== null && section.amountKey !== undefined
+          ? Number(row?.[section.amountKey])
+          : null;
+
+        hits.push({
+          tplId: tpl.id,
+          tplName,
+          section: section.label,
+          date: section.dateKey ? (row?.[section.dateKey] || "") : "",
+          title: section.title(row),
+          subtitle: section.subtitle ? section.subtitle(row) : "",
+          amount: Number.isFinite(amount) ? amount : null,
+          estado: row?.estado || ""
+        });
+      }
+    }
+  }
+
+  return hits;
+}
+
 function noteHtml(txt){
   const note = (txt || "").trim();
   if (!note) return `<span class="note-empty">—</span>`;
@@ -550,6 +648,62 @@ function renderDashboard(){
   $("kpiHint").textContent = bal>=0 ? "Vas arriba 💪" : "Ojo: estás en negativo";
 
   // Set badge hints for overdue payables/receivables (not shown in KPI)
+
+  renderSearchResultsAcrossTemplates(q);
+}
+
+function renderSearchResultsAcrossTemplates(query){
+  const wrap = $("searchResults");
+  const list = $("searchResultsList");
+  const count = $("searchResultsCount");
+  if (!wrap || !list || !count) return;
+
+  const term = (query || "").trim();
+  if (!term) {
+    count.textContent = "Buscá por nombre, concepto o proveedor.";
+    list.innerHTML = `<div class="empty">Escribí algo en “Búsqueda rápida” para ver coincidencias.</div>`;
+    return;
+  }
+
+  const hits = collectGlobalSearchHits(term);
+  const maxToShow = 80;
+  const plural = hits.length === 1 ? "" : "s";
+  count.textContent = hits.length
+    ? `${hits.length} coincidencia${plural} en tus plantillas`
+    : "Sin coincidencias en tus plantillas.";
+
+  list.innerHTML = "";
+
+  if (!hits.length) {
+    list.innerHTML = `<div class="empty">Probá con otro término o revisá si está en otro mes.</div>`;
+    return;
+  }
+
+  hits.slice(0, maxToShow).forEach((hit) => {
+    const metaParts = [];
+    if (hit.date) metaParts.push(hit.date);
+    if (hit.estado) metaParts.push(hit.estado);
+
+    const row = document.createElement("div");
+    row.className = "search-hit";
+    row.innerHTML = `
+      <div class="search-hit__main">
+        <div class="search-hit__label">${escAttr(hit.section)} · ${escAttr(hit.tplName)}</div>
+        <div class="search-hit__title">${escAttr(hit.title)}</div>
+        ${hit.subtitle ? `<div class="search-hit__subtitle">${escAttr(hit.subtitle)}</div>` : ""}
+        ${metaParts.length ? `<div class="search-hit__meta">${escAttr(metaParts.join(" • "))}</div>` : ""}
+      </div>
+      ${hit.amount !== null ? `<div class="search-hit__amount">${money(hit.amount)}</div>` : ""}
+    `;
+    list.appendChild(row);
+  });
+
+  if (hits.length > maxToShow) {
+    const more = document.createElement("div");
+    more.className = "small";
+    more.textContent = `Mostrando ${maxToShow} de ${hits.length} coincidencias. Refiná la búsqueda para acotar el resultado.`;
+    list.appendChild(more);
+  }
 }
 
 function renderIngresos(){

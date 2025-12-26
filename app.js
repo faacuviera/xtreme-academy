@@ -476,6 +476,33 @@ function noteHtml(txt){
   return `<div class="note-text">${escAttr(note)}</div>`;
 }
 
+function requireDateValue(value, contextLabel){
+  const v = (value || "").trim();
+  if (!v) {
+    alert(`Ingresá la fecha de ${contextLabel}; no puede quedar vacía.`);
+    return null;
+  }
+  return v;
+}
+
+function requireMontoValue(value, contextLabel){
+  const raw = value ?? "";
+  if (String(raw).trim() === "") {
+    alert(`Ingresá el monto de ${contextLabel}; no puede quedar vacío.`);
+    return null;
+  }
+  const monto = Number(raw);
+  if (Number.isNaN(monto)) {
+    alert(`El monto de ${contextLabel} tiene que ser un número válido.`);
+    return null;
+  }
+  if (monto < 0) {
+    alert(`El monto de ${contextLabel} no puede ser negativo.`);
+    return null;
+  }
+  return monto;
+}
+
 /* ---------- Rendering ---------- */
 function render(){
   renderAll();
@@ -698,16 +725,19 @@ function editCxc(id) {
 }
 
 function saveCxc(id) {
-  const vence    = document.getElementById(`ed_cxc_vence_${id}`)?.value || "";
+  const venceRaw = document.getElementById(`ed_cxc_vence_${id}`)?.value || "";
   const nombre   = document.getElementById(`ed_cxc_nombre_${id}`)?.value.trim() || "";
   const concepto = document.getElementById(`ed_cxc_concepto_${id}`)?.value.trim() || "";
   const montoStr = document.getElementById(`ed_cxc_monto_${id}`)?.value || "0";
   const estado   = document.getElementById(`ed_cxc_estado_${id}`)?.value || "";
   const notas    = document.getElementById(`ed_cxc_notas_${id}`)?.value || "";
 
-  const monto = Number(montoStr);
+  const vence = requireDateValue(venceRaw, "esta cuenta por cobrar");
+  if (!vence) return;
+  const monto = requireMontoValue(montoStr, "esta cuenta por cobrar");
+  if (monto === null) return;
   if (!nombre) return alert("El nombre no puede quedar vacío.");
-  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+  if (!concepto) return alert("El concepto no puede quedar vacío.");
 
   const active = getActive();
   const arr = active.cxc || [];
@@ -732,7 +762,7 @@ function editIngreso(id){
 }
 
 function saveIngreso(id){
-  const fecha    = document.getElementById(`ed_ing_fecha_${id}`)?.value || todayISO();
+  const fecha    = requireDateValue(document.getElementById(`ed_ing_fecha_${id}`)?.value, "este ingreso");
   const nombre   = document.getElementById(`ed_ing_nombre_${id}`)?.value.trim() || "";
   const concepto = document.getElementById(`ed_ing_concepto_${id}`)?.value.trim() || "";
   const montoStr = document.getElementById(`ed_ing_monto_${id}`)?.value || "0";
@@ -740,9 +770,10 @@ function saveIngreso(id){
   const estado   = document.getElementById(`ed_ing_estado_${id}`)?.value || "";
   const notas    = document.getElementById(`ed_ing_notas_${id}`)?.value || "";
 
-  const monto = Number(montoStr);
+  if (!fecha) return;
+  const monto = requireMontoValue(montoStr, "este ingreso");
   if (!concepto) return alert("El concepto no puede quedar vacío.");
-  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+  if (monto === null) return;
 
   const active = getActive();
   active.ingresos = (active.ingresos || []).map(r =>
@@ -764,15 +795,16 @@ function editGasto(id) {
 }
 
 function saveGasto(id) {
-  const fecha    = document.getElementById(`ed_gas_fecha_${id}`)?.value || todayISO();
+  const fecha    = requireDateValue(document.getElementById(`ed_gas_fecha_${id}`)?.value, "este egreso");
   const concepto = document.getElementById(`ed_gas_concepto_${id}`)?.value.trim() || "";
   const categoria= document.getElementById(`ed_gas_categoria_${id}`)?.value.trim() || "";
   const montoStr = document.getElementById(`ed_gas_monto_${id}`)?.value || "0";
   const notas    = document.getElementById(`ed_gas_notas_${id}`)?.value || "";
 
-  const monto = Number(montoStr);
+  if (!fecha) return;
+  const monto = requireMontoValue(montoStr, "este egreso");
   if (!concepto) return alert("El concepto no puede quedar vacío.");
-  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+  if (monto === null) return;
 
   const active = getActive();
   active.gastos = (active.gastos || []).map(r =>
@@ -1098,15 +1130,18 @@ function editCxp(id) {
 }
 function saveCxp(id) {
   const proveedor = document.getElementById(`ed_cxp_proveedor_${id}`)?.value.trim() || "";
-  const vence     = document.getElementById(`ed_cxp_vence_${id}`)?.value || todayISO();
+  const venceRaw  = document.getElementById(`ed_cxp_vence_${id}`)?.value || "";
   const concepto  = document.getElementById(`ed_cxp_concepto_${id}`)?.value.trim() || "";
   const montoStr  = document.getElementById(`ed_cxp_monto_${id}`)?.value || "0";
   const estado    = document.getElementById(`ed_cxp_estado_${id}`)?.value || "Pendiente";
   const notas     = document.getElementById(`ed_cxp_notas_${id}`)?.value || "";
 
-  const monto = Number(montoStr);
+  const vence = requireDateValue(venceRaw, "esta cuenta por pagar");
+  if (!vence) return;
+  const monto = requireMontoValue(montoStr, "esta cuenta por pagar");
+  if (monto === null) return;
   if (!proveedor) return alert("El proveedor es obligatorio.");
-  if (Number.isNaN(monto) || monto < 0) return alert("El monto tiene que ser un número válido.");
+  if (!concepto) return alert("El concepto no puede quedar vacío.");
 
   const active = getActive();
   active.cxp = (active.cxp || []).map(c =>
@@ -1269,17 +1304,22 @@ function wireActions(){
 
   // Add / update
   $("addIngresoBtn").addEventListener("click", async()=>{
+    const fecha = requireDateValue($("inFecha").value, "este ingreso");
+    const monto = requireMontoValue($("inMonto").value, "este ingreso");
+    const nombre = $("inNombre").value.trim();
+    const concepto = $("inConcepto").value.trim();
+    if (!fecha || monto === null) return;
+    if(!nombre || !concepto){ alert("Poné nombre y qué pagó."); return; }
     const data={
       id: $("addIngresoBtn").dataset.editId || uid(),
-      nombre: $("inNombre").value.trim(),
-      fecha: $("inFecha").value || todayISO(),
-      concepto: $("inConcepto").value.trim(),
-      monto: Number($("inMonto").value||0),
+      nombre,
+      fecha,
+      concepto,
+      monto,
       medio: $("inMedio").value,
       estado: $("inEstado").value,
       notas: $("inNotas").value.trim()
     };
-    if(!data.nombre || !data.concepto){ alert("Poné nombre y qué pagó."); return; }
     upsert("ingresos", data, $("addIngresoBtn").dataset.editId);
     await persistActive(); clearIngresoForm(); renderAll();
   });
@@ -1288,28 +1328,29 @@ function wireActions(){
   $("addGastoBtn").addEventListener("click", async () => {
   const concepto  = $("gaConcepto").value.trim();
   const fechaIn   = $("gaFecha").value.trim();     // 👈 no default acá
-  const monto     = Number($("gaMonto").value || 0);
+  const monto     = requireMontoValue($("gaMonto").value, "este egreso");
   const categoria = $("gaCategoria").value.trim();
   const notas     = $("gaNotas").value.trim();
-
+  if (monto === null) return;
   if (!concepto) return alert("Poné qué pagaste.");
-  if (Number.isNaN(monto) || monto <= 0) return alert("El monto tiene que ser un número válido.");
 
   const btn = $("addGastoBtn");
   const editId = btn.dataset.editId || null;
 
   const active = getActive();
   active.gastos ??= [];
+  const prev = editId ? active.gastos.find(g => g.id === editId) : null;
+  const fechaValid = fechaIn ? requireDateValue(fechaIn, "este egreso") : (prev?.fecha || "");
+  if (!fechaValid) return alert("Ingresá la fecha de este egreso.");
 
   if (editId) {
     // ✏️ EDITAR: mantener fecha previa si el input quedó vacío
-    const prev = active.gastos.find(g => g.id === editId);
     if (!prev) return alert("No encontré ese egreso para editar.");
 
     const updated = {
       ...prev,
       concepto,
-      fecha: (fechaIn || prev.fecha || todayISO()),
+      fecha: fechaValid || prev.fecha || todayISO(),
       monto,
       categoria,
       notas
@@ -1326,7 +1367,7 @@ function wireActions(){
     const item = {
       id: uid(),
       concepto,
-      fecha: (fechaIn || todayISO()),
+      fecha: fechaValid || todayISO(),
       monto,
       categoria,
       notas
@@ -1354,20 +1395,21 @@ if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
 
 const btnAddCxc = $("addCxcBtn");
 if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
-  const monto = Number($("cxcmonto").value || 0);
+  const monto = requireMontoValue($("cxcmonto").value, "esta cuenta por cobrar");
+  const vence = requireDateValue($("cxcvence").value, "esta cuenta por cobrar");
   const data = {
     id: btnAddCxc.dataset.editId || uid(),
     nombre: $("cxcnombre").value.trim(),
-    vence: $("cxcvence").value || todayISO(),
+    vence,
     concepto: $("cxcconcepto").value.trim(),
     monto,
     estado: $("cxcestado").value || "Pendiente",
     notas: $("cxcnotas").value.trim()
   };
 
+  if (!vence || monto === null) return;
   if (!data.nombre) { alert("Poné el alumno/cliente."); return; }
   if (!data.concepto) { alert("Poné el concepto."); return; }
-  if (Number.isNaN(monto) || monto < 0) { alert("El monto tiene que ser un número válido."); return; }
 
   upsert("cxc", data, btnAddCxc.dataset.editId);
   await persistActive();
@@ -1377,17 +1419,21 @@ if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
 
 const btnAddCxp = $("addCxpBtn");
 if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 
+    const monto = requireMontoValue($("cxpmonto").value, "esta cuenta por pagar");
+    const vence = requireDateValue($("cxpvence").value, "esta cuenta por pagar");
+    if (monto === null || !vence) return;
 
     const data={
       id: $("addCxpBtn").dataset.editId || uid(),
       proveedor: $("cxpproveedor").value.trim(),
-      vence: $("cxpvence").value || todayISO(),
+      vence,
       concepto: $("cxpconcepto").value.trim(),
-      monto: Number($("cxpmonto").value||0),
+      monto,
       estado: $("cxpestado").value,
       notas: $("cxpnotas").value.trim()
     };
     if(!data.proveedor){ alert("Poné el proveedor."); return; }
+    if(!data.concepto){ alert("Poné el concepto."); return; }
     upsert("cxp", data, $("addCxpBtn").dataset.editId);
     await persistActive(); clearCxpForm(); renderAll();
   });
@@ -1782,9 +1828,9 @@ function saveAlumno(id) {
   const cuotaStr   = document.getElementById(`ed_cuota_${id}`)?.value || "0";
   const ata         = document.getElementById(`ed_at_${id}`)?.value.trim() || "";
 
-  const cuota = Number(cuotaStr);
+  const cuota = requireMontoValue(cuotaStr, "la cuota del alumno");
+  if (cuota === null) return;
   if (!nombre) return alert("El nombre no puede quedar vacío.");
-  if (Number.isNaN(cuota) || cuota < 0) return alert("La cuota tiene que ser un número válido.");
 
   const active = getActive();
   const arr = active.alumnos || [];
@@ -1860,6 +1906,8 @@ function renderAlumnos(){
 function addOrUpdateAlumno(){
   const active = getActive();
   const id = $("addAlumnoBtn").dataset.editId || uid();
+  const cuota = requireMontoValue($("alCuota").value, "la cuota del alumno");
+  if (cuota === null) return;
 
   const alumno = {
     id,
@@ -1868,7 +1916,7 @@ function addOrUpdateAlumno(){
     numero: $("alNumero").value,
     ingreso: $("alIngreso").value || todayISO(),
     programa: $("alPrograma").value,
-    cuota: Number($("alCuota").value||0),
+    cuota,
     ata: $("alAta").value
   };
 

@@ -121,6 +121,38 @@ tr:hover td{background: rgba(255,255,255,.03);}
   flex:1 1 auto;
 }
 .small{font-size:12px;color:var(--muted);}
+.search-results{
+  margin-top:16px;
+  border-top:1px solid var(--border);
+  padding-top:12px;
+}
+.search-results__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+}
+.search-results__title{font-weight:800;}
+.search-results__list{display:flex;flex-direction:column;gap:8px;}
+.search-hit{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  gap:12px;
+  justify-content:space-between;
+  align-items:flex-start;
+  background: rgba(255,255,255,.02);
+}
+.search-hit__main{display:flex;flex-direction:column;gap:4px;}
+.search-hit__label{font-size:11px;letter-spacing:.2px;color:var(--muted);}
+.search-hit__title{font-weight:800;}
+.search-hit__subtitle{color:var(--muted);}
+.search-hit__meta{color:var(--muted);font-size:12px;}
+.search-hit__amount{font-weight:900;white-space:nowrap;}
+.search-results .empty{color:var(--muted);}
 footer{
   position:fixed; bottom:0; left:0; right:0; z-index:25;
   background: rgba(10,10,12,.75);

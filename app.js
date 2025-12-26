@@ -415,12 +415,10 @@ function setActiveTemplate(id){
 /* ---------- Tabs ---------- */
 function updateTabHero(tab){
   const hero = $("tabHero");
-  const img = $("tabHeroImg");
-  if (!hero || !img) return;
+  if (!hero) return;
 
   const visual = TAB_VISUALS[tab] || TAB_VISUALS.dashboard;
-  img.src = visual.src;
-  img.alt = `Ilustración de ${visual.alt || "la sección"}`;
+  hero.style.setProperty("--hero-image", `url("${visual.src}")`);
 }
 
 function wireTabs(){

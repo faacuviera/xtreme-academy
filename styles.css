@@ -33,12 +33,13 @@ header{
   left:14px;
   pointer-events:none;
   z-index:0;
-}
-.tab-hero img{
-  width:min(360px,40vw);
-  height:auto;
-  opacity:.32;
-  filter: none;
+  width:min(420px,48vw);
+  height:min(260px,42vw);
+  background-image: var(--hero-image, url("./assets/hero-ingresos.svg"));
+  background-repeat:no-repeat;
+  background-size: contain;
+  background-position: left bottom;
+  opacity:.28;
 }
 .nav{
   display:flex; gap:8px; flex-wrap:wrap;

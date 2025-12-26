@@ -13,7 +13,6 @@ import {
 } from "./utils.js";
 
 const $ = (id)=>document.getElementById(id);
-
 /* ---------- Logging & non-fatal notifications ---------- */
 function createLogger(scope) {
   const prefix = `[${scope}]`;

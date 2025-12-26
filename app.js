@@ -361,6 +361,7 @@ async function init(){
   // UI wiring
   wireTabs();
   wireActions();
+  setupInlineEditHotkeys();
   updateTabHero(document.querySelector(".nav button.active")?.dataset.tab || "dashboard");
 
   // Render
@@ -1961,6 +1962,42 @@ function startEdit(section, id) {
 function cancelEdit() {
   editMode = { section: null, id: null };
   render();
+}
+
+function setupInlineEditHotkeys() {
+  const saveHandlers = {
+    ingresos: saveIngreso,
+    gastos: saveGasto,
+    cxc: saveCxc,
+    cxp: saveCxp,
+    inventario: saveInventario,
+    alumnos: saveAlumno
+  };
+
+  document.addEventListener("keydown", (event) => {
+    if (!editMode.section || !editMode.id) return;
+    if (!event.target || typeof event.target.closest !== "function") return;
+
+    const editingRow = event.target.closest(".editing-row");
+    if (!editingRow) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelEdit();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      const tag = String(event.target.tagName || "").toLowerCase();
+      if (tag === "textarea" && !(event.ctrlKey || event.metaKey)) return;
+
+      const handler = saveHandlers[editMode.section];
+      if (typeof handler === "function") {
+        event.preventDefault();
+        handler(editMode.id);
+      }
+    }
+  });
 }
 
 // Tu botón actual llama editAlumno(id)

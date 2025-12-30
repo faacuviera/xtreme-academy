@@ -25,7 +25,7 @@
       <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
     </form>
     <div class="directory-toggle-wrap">
-      <button type="button" id="directoryToggle" class="ghost" aria-expanded="false" aria-controls="directoryMenu">Directorio</button>
+      <button type="button" id="directoryToggle" class="ghost directory-toggle" aria-expanded="false" aria-controls="directoryMenu">Directorio</button>
       <nav id="directoryMenu" class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
         <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
         <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
@@ -753,6 +753,8 @@ const directoryButtons = Array.from(document.querySelectorAll("[data-directory-t
 const backToFinanceBtn = document.getElementById("backToFinanceBtn");
 const directoryToggle = document.getElementById("directoryToggle");
 const DIRECTORY_STORE_KEY = "xa_directory_v1";
+const DIRECTORY_AUTH_KEY = "xa_directory_auth_ok";
+const DIRECTORY_PASSWORD = "frente1234";
 
 let directoryState = {
   clases: [
@@ -810,6 +812,7 @@ function setDirectoryMenu(open) {
 }
 
 function showDirectory(targetId) {
+  if (!ensureDirectoryAccess()) return;
   if (directoryPanel) directoryPanel.hidden = false;
   if (financePanel) financePanel.hidden = true;
   document.body.classList.add("view-directory");
@@ -835,6 +838,7 @@ function showFinance() {
 
 directoryButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
+    if (!ensureDirectoryAccess()) return;
     const targetId = btn.dataset.directoryTarget;
     showDirectory(targetId);
     renderDirectorySearch();
@@ -843,6 +847,7 @@ directoryButtons.forEach((btn) => {
 
 if (directoryToggle) {
   directoryToggle.addEventListener("click", () => {
+    if (!ensureDirectoryAccess()) return;
     const isOpen = bodyEl.classList.contains("directory-menu-open");
     setDirectoryMenu(!isOpen);
   });
@@ -854,6 +859,21 @@ if (backToFinanceBtn) {
 
 // Start in vista finanzas
 showFinance();
+
+function ensureDirectoryAccess() {
+  try {
+    if (localStorage.getItem(DIRECTORY_AUTH_KEY) === "1") return true;
+  } catch (_e) {
+    // ignore read error, fallback to prompt
+  }
+  const pwd = prompt("Ingresá la contraseña para acceder al directorio:");
+  if (pwd === DIRECTORY_PASSWORD) {
+    try { localStorage.setItem(DIRECTORY_AUTH_KEY, "1"); } catch (_err) { /* ignore */ }
+    return true;
+  }
+  alert("Contraseña incorrecta.");
+  return false;
+}
 
 /* ----- Gestión de clases ----- */
 const classForm = document.getElementById("classForm");

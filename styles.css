@@ -70,6 +70,10 @@ header{
   align-items:center;
   gap:10px;
 }
+.directory-toggle{
+  color: var(--text);
+  font-weight:800;
+}
 .directory-menu-open .section-links{
   display:flex;
 }

@@ -24,11 +24,14 @@
       <label class="sr-only" for="directorySearch">Buscar en el listado</label>
       <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
     </form>
-    <nav class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
-      <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
-      <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
-      <button type="button" data-directory-target="alumnos" aria-controls="directoryPanel">Alumnos</button>
-    </nav>
+    <div class="directory-toggle-wrap">
+      <button type="button" id="directoryToggle" class="ghost" aria-expanded="false" aria-controls="directoryMenu">Directorio</button>
+      <nav id="directoryMenu" class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
+        <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
+        <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
+        <button type="button" data-directory-target="alumnos" aria-controls="directoryPanel">Alumnos</button>
+      </nav>
+    </div>
   </div>
   <div class="nav" role="tablist" aria-label="Secciones financieras">
     <button data-tab="dashboard" class="active">Resumen</button>
@@ -700,6 +703,7 @@
 import { highlightTerm, matchesQuery, uid } from "./utils.js";
 
 const searchInput = document.getElementById("directorySearch");
+const bodyEl = document.body;
 
 function getDirectories() {
   return Array.from(document.querySelectorAll("[data-filter-section]")).map((list) => ({
@@ -747,6 +751,7 @@ const directoryPanel = document.getElementById("directoryPanel");
 const financePanel = document.getElementById("financePanel");
 const directoryButtons = Array.from(document.querySelectorAll("[data-directory-target]"));
 const backToFinanceBtn = document.getElementById("backToFinanceBtn");
+const directoryToggle = document.getElementById("directoryToggle");
 const DIRECTORY_STORE_KEY = "xa_directory_v1";
 
 let directoryState = {
@@ -795,6 +800,15 @@ function setActiveDirectoryButton(targetId) {
   });
 }
 
+function setDirectoryMenu(open) {
+  if (directoryToggle) {
+    directoryToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (bodyEl) {
+    bodyEl.classList.toggle("directory-menu-open", open);
+  }
+}
+
 function showDirectory(targetId) {
   if (directoryPanel) directoryPanel.hidden = false;
   if (financePanel) financePanel.hidden = true;
@@ -815,6 +829,7 @@ function showFinance() {
   if (directoryPanel) directoryPanel.hidden = true;
   if (financePanel) financePanel.hidden = false;
   document.body.classList.remove("view-directory");
+  setDirectoryMenu(false);
   setActiveDirectoryButton("");
 }
 
@@ -825,6 +840,13 @@ directoryButtons.forEach((btn) => {
     renderDirectorySearch();
   });
 });
+
+if (directoryToggle) {
+  directoryToggle.addEventListener("click", () => {
+    const isOpen = bodyEl.classList.contains("directory-menu-open");
+    setDirectoryMenu(!isOpen);
+  });
+}
 
 if (backToFinanceBtn) {
   backToFinanceBtn.addEventListener("click", showFinance);

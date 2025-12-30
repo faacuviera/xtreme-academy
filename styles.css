@@ -49,7 +49,7 @@ header{
 }
 .section-links{
   grid-column: 1 / -1;
-  display:flex;
+  display:none;
   gap:10px;
   align-items:center;
   flex-wrap:wrap;
@@ -63,6 +63,15 @@ header{
   text-decoration:none;
   font-weight:700;
   color:var(--text);
+}
+.directory-toggle-wrap{
+  grid-column: 1 / -1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.directory-menu-open .section-links{
+  display:flex;
 }
 .section-links button{
   cursor:pointer;

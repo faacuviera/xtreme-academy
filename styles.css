@@ -45,6 +45,7 @@ header{
   justify-self:end;
   width:100%;
   max-width:360px;
+  display:none;
 }
 .section-links{
   grid-column: 1 / -1;
@@ -72,9 +73,12 @@ header{
 @media(max-width:520px){
   .header-inner{
     grid-template-columns: 1fr;
-    align-items:flex-start;
+  align-items:flex-start;
   }
   body{padding-top: 220px;}
+}
+.view-directory .header-search{
+  display:block;
 }
 .brand{display:flex;gap:10px;align-items:center}
 .brand img{width:32px;height:32px;border-radius:10px;border:1px solid var(--border);}

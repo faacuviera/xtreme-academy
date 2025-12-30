@@ -25,9 +25,9 @@
       <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
     </form>
     <nav class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
-      <a href="#clases">Clases</a>
-      <a href="#profes">Profes</a>
-      <a href="#tab-alumnos">Alumnos</a>
+      <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
+      <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
+      <button type="button" data-directory-target="alumnos" aria-controls="directoryPanel">Alumnos</button>
     </nav>
   </div>
   <div class="nav" role="tablist" aria-label="Secciones financieras">
@@ -44,7 +44,7 @@
 
 <div id="appAlerts" class="app-alerts" aria-live="polite" aria-atomic="true"></div>
 
-<main class="container">
+<main id="directoryPanel" class="container directory-panel" aria-label="Directorio académico">
   <section class="directory" aria-label="Atajos a clases, profes y alumnos">
     <div class="directory-grid">
       <article class="directory-card" id="clases">
@@ -102,7 +102,13 @@
         <p class="directory-empty" aria-live="polite" hidden>Sin alumnos para mostrar.</p>
       </article>
     </div>
+    <div class="directory-actions">
+      <button class="ghost" type="button" id="backToFinanceBtn">Volver a finanzas</button>
+    </div>
   </section>
+</main>
+
+<main id="financePanel" class="container">
 
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab">
@@ -719,6 +725,57 @@ if (searchInput) {
   searchInput.addEventListener("input", renderDirectorySearch);
   renderDirectorySearch();
 }
+
+const directoryPanel = document.getElementById("directoryPanel");
+const financePanel = document.getElementById("financePanel");
+const directoryButtons = Array.from(document.querySelectorAll("[data-directory-target]"));
+const backToFinanceBtn = document.getElementById("backToFinanceBtn");
+
+function setActiveDirectoryButton(targetId) {
+  directoryButtons.forEach((btn) => {
+    const isActive = btn.dataset.directoryTarget === targetId;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function showDirectory(targetId) {
+  if (directoryPanel) directoryPanel.hidden = false;
+  if (financePanel) financePanel.hidden = true;
+  document.body.classList.add("view-directory");
+  setActiveDirectoryButton(targetId);
+
+  if (targetId) {
+    const card = document.getElementById(targetId);
+    if (card) {
+      card.setAttribute("tabindex", "-1");
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      card.focus({ preventScroll: true });
+    }
+  }
+}
+
+function showFinance() {
+  if (directoryPanel) directoryPanel.hidden = true;
+  if (financePanel) financePanel.hidden = false;
+  document.body.classList.remove("view-directory");
+  setActiveDirectoryButton("");
+}
+
+directoryButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetId = btn.dataset.directoryTarget;
+    showDirectory(targetId);
+    renderDirectorySearch();
+  });
+});
+
+if (backToFinanceBtn) {
+  backToFinanceBtn.addEventListener("click", showFinance);
+}
+
+// Start in vista finanzas
+showFinance();
 </script>
 <script type="module" src="./app.js?v=161"></script>
 </body>

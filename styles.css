@@ -53,13 +53,21 @@ header{
   align-items:center;
   flex-wrap:wrap;
 }
-.section-links a{
+.section-links a,
+.section-links button{
   padding:9px 12px;
   border-radius: 999px;
   border:1px solid var(--border);
   background: rgba(255,255,255,.04);
   text-decoration:none;
   font-weight:700;
+  color:var(--text);
+}
+.section-links button{
+  cursor:pointer;
+}
+.section-links button.active{
+  background: rgba(255,255,255,.12);
 }
 @media(max-width:520px){
   .header-inner{
@@ -328,4 +336,16 @@ footer{
   margin:10px 0 0;
   font-size:12px;
   color:var(--muted);
+}
+.directory-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+.directory-panel[hidden],
+#financePanel[hidden]{
+  display:none;
+}
+.view-directory .nav{
+  display:none;
 }

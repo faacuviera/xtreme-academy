@@ -1302,6 +1302,7 @@ function saveCxp(id) {
   const montoStr  = document.getElementById(`ed_cxp_monto_${id}`)?.value || "0";
   const estado    = document.getElementById(`ed_cxp_estado_${id}`)?.value || "Pendiente";
   const notas     = document.getElementById(`ed_cxp_notas_${id}`)?.value || "";
+  const isPaid    = String(estado || "").toLowerCase() === "pagado";
 
   const vence = requireDateValue(venceRaw, "esta cuenta por pagar");
   if (!vence) return;
@@ -1311,9 +1312,16 @@ function saveCxp(id) {
   if (!concepto) return alert("El concepto no puede quedar vacío.");
 
   const active = getActive();
-  active.cxp = (active.cxp || []).map(c =>
-    c.id === id ? { ...c, proveedor, vence, concepto, monto, estado, notas } : c
-  );
+  active.cxp = (active.cxp || []).map(c => {
+    if (c.id !== id) return c;
+    const next = { ...c, proveedor, vence, concepto, monto, estado, notas };
+    if (isPaid) next.pagadoEn = c.pagadoEn || todayISO();
+    else delete next.pagadoEn;
+    return next;
+  });
+
+  const updated = (active.cxp || []).find(c => c.id === id);
+  syncCxpExpense(active, updated);
 
   setActive(active);
   persistActive(active);
@@ -1417,12 +1425,38 @@ function markCxcPaid(id) {
 
 window.markCxcPaid = markCxcPaid;
 
+function syncCxpExpense(active, cxp) {
+  if (!active || !cxp) return;
+
+  active.gastos ??= [];
+  const idx = active.gastos.findIndex(g => g.origen === "CXP" && g.refId === cxp.id);
+  const isPaid = String(cxp.estado || "").toLowerCase() === "pagado";
+
+  if (!isPaid) {
+    if (idx >= 0) active.gastos.splice(idx, 1);
+    return;
+  }
+
+  const payload = {
+    id: idx >= 0 ? active.gastos[idx].id : "gas_" + uid(),
+    fecha: cxp.pagadoEn || todayISO(),
+    concepto: cxp.concepto || cxp.proveedor || "Pago de CxP",
+    categoria: cxp.proveedor || "",
+    monto: Number(cxp.monto || 0),
+    notas: cxp.notas || "",
+    origen: "CXP",
+    refId: cxp.id
+  };
+
+  if (idx >= 0) active.gastos[idx] = { ...active.gastos[idx], ...payload };
+  else active.gastos.push(payload);
+}
+
 function markCxpPaid(id) {
   log.info("🔥 markCxpPaid ejecutándose", { id });
 
   const active = getActive();
   active.cxp ??= [];
-  active.gastos ??= [];
 
   const idx = active.cxp.findIndex(c => c.id === id);
   if (idx < 0) {
@@ -1437,16 +1471,7 @@ function markCxpPaid(id) {
   const cxp = active.cxp[idx];
   active.cxp[idx] = { ...cxp, estado: "Pagado", pagadoEn: todayISO() };
 
-  active.gastos.push({
-    id: "gas_" + uid(),
-    fecha: todayISO(),
-    concepto: cxp.concepto || cxp.proveedor || "Pago de CxP",
-    categoria: cxp.proveedor || "",
-    monto: Number(cxp.monto || 0),
-    notas: cxp.notas || "",
-    origen: "CXP",
-    refId: cxp.id
-  });
+  syncCxpExpense(active, active.cxp[idx]);
 
   saveActiveData(active);
   state.active = active;
@@ -1639,10 +1664,16 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
       estado: $("cxpestado").value,
       notas: $("cxpnotas").value.trim()
     };
+    const isPaid = String(data.estado || "").toLowerCase() === "pagado";
+    if (isPaid) data.pagadoEn = data.pagadoEn || todayISO();
     if(!data.proveedor){ alert("Poné el proveedor."); return; }
     if(!data.concepto){ alert("Poné el concepto."); return; }
     upsert("cxp", data, $("addCxpBtn").dataset.editId);
-    await persistActive(); clearCxpForm(); renderAll();
+    const active = state.active || getActive();
+    const saved = (active.cxp || []).find(c => c.id === data.id);
+    syncCxpExpense(active, saved);
+    state.active = active;
+    await persistActive(active); clearCxpForm(); renderAll();
   });
   $("clearCxpBtn").addEventListener("click", clearCxpForm);
 

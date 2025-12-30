@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<header>
+<header class="site-header">
   <div class="header-inner">
     <div class="brand">
       <img src="icon-512.png" alt="Xtreme Academy"/>
@@ -20,22 +20,89 @@
         <span id="activeTemplateLabel">Plantilla: —</span>
       </div>
     </div>
-    <div class="nav" role="tablist" aria-label="Secciones">
-      <button data-tab="dashboard" class="active">Resumen</button>
-      <button data-tab="ingresos">Ingresos</button>
-      <button data-tab="gastos">Egresos</button>
-      <button data-tab="cxc">Por cobrar</button>
-      <button data-tab="cxp">Por pagar</button>
-      <button data-tab="inventario">Inventario</button>
-      <button data-tab="alumnos">Alumnos</button>
-      <button data-tab="plantillas">Plantillas</button>
-    </div>
+    <form class="header-search" role="search" aria-label="Buscador de clases, profes y alumnos">
+      <label class="sr-only" for="directorySearch">Buscar en el listado</label>
+      <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
+    </form>
+    <nav class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
+      <a href="#clases">Clases</a>
+      <a href="#profes">Profes</a>
+      <a href="#tab-alumnos">Alumnos</a>
+    </nav>
+  </div>
+  <div class="nav" role="tablist" aria-label="Secciones financieras">
+    <button data-tab="dashboard" class="active">Resumen</button>
+    <button data-tab="ingresos">Ingresos</button>
+    <button data-tab="gastos">Egresos</button>
+    <button data-tab="cxc">Por cobrar</button>
+    <button data-tab="cxp">Por pagar</button>
+    <button data-tab="inventario">Inventario</button>
+    <button data-tab="alumnos">Alumnos</button>
+    <button data-tab="plantillas">Plantillas</button>
   </div>
 </header>
 
 <div id="appAlerts" class="app-alerts" aria-live="polite" aria-atomic="true"></div>
 
 <main class="container">
+  <section class="directory" aria-label="Atajos a clases, profes y alumnos">
+    <div class="directory-grid">
+      <article class="directory-card" id="clases">
+        <header class="directory-card__title">Clases</header>
+        <ul class="directory-list" data-filter-section="clases" role="list">
+          <li class="directory-item" data-label="Infantiles · Lunes 18:00" role="listitem">
+            <span class="directory-item__text">Infantiles · Lunes 18:00</span>
+            <span class="tag">Do Jang Norte</span>
+          </li>
+          <li class="directory-item" data-label="Juveniles · Martes 19:00" role="listitem">
+            <span class="directory-item__text">Juveniles · Martes 19:00</span>
+            <span class="tag">Do Jang Sur</span>
+          </li>
+          <li class="directory-item" data-label="Adultos · Jueves 20:00" role="listitem">
+            <span class="directory-item__text">Adultos · Jueves 20:00</span>
+            <span class="tag">Sede Central</span>
+          </li>
+        </ul>
+        <p class="directory-empty" aria-live="polite" hidden>Sin clases para este término.</p>
+      </article>
+      <article class="directory-card" id="profes">
+        <header class="directory-card__title">Profes</header>
+        <ul class="directory-list" data-filter-section="profes" role="list">
+          <li class="directory-item" data-label="Sensei Lucía Suárez" role="listitem">
+            <span class="directory-item__text">Sensei Lucía Suárez</span>
+            <span class="tag">Infantiles</span>
+          </li>
+          <li class="directory-item" data-label="Profe Martín Vega" role="listitem">
+            <span class="directory-item__text">Profe Martín Vega</span>
+            <span class="tag">Juveniles</span>
+          </li>
+          <li class="directory-item" data-label="Coach Ana Díaz" role="listitem">
+            <span class="directory-item__text">Coach Ana Díaz</span>
+            <span class="tag">Adultos</span>
+          </li>
+        </ul>
+        <p class="directory-empty" aria-live="polite" hidden>Sin profes que coincidan.</p>
+      </article>
+      <article class="directory-card" id="alumnos">
+        <header class="directory-card__title">Alumnos</header>
+        <ul class="directory-list" data-filter-section="alumnos" role="list">
+          <li class="directory-item" data-label="Juan Pérez" role="listitem">
+            <span class="directory-item__text">Juan Pérez</span>
+            <span class="tag">Básico</span>
+          </li>
+          <li class="directory-item" data-label="Lucía Martínez" role="listitem">
+            <span class="directory-item__text">Lucía Martínez</span>
+            <span class="tag">BBC</span>
+          </li>
+          <li class="directory-item" data-label="Camila Ríos" role="listitem">
+            <span class="directory-item__text">Camila Ríos</span>
+            <span class="tag">Líder</span>
+          </li>
+        </ul>
+        <p class="directory-empty" aria-live="polite" hidden>Sin alumnos para mostrar.</p>
+      </article>
+    </div>
+  </section>
 
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab">
@@ -610,6 +677,49 @@
   </div>
 </footer>
 
+<script type="module">
+import { highlightTerm, matchesQuery } from "./utils.js";
+
+const searchInput = document.getElementById("directorySearch");
+const directories = Array.from(document.querySelectorAll("[data-filter-section]")).map((list) => ({
+  list,
+  items: Array.from(list.querySelectorAll("[data-label]")).map((item) => ({
+    el: item,
+    label: item.dataset.label || item.textContent || ""
+  })),
+  empty: list.parentElement.querySelector(".directory-empty")
+}));
+
+function renderDirectorySearch() {
+  const query = searchInput?.value || "";
+
+  directories.forEach(({ list, items, empty }) => {
+    let visible = 0;
+
+    items.forEach(({ el, label }) => {
+      const match = matchesQuery(label, query);
+      el.hidden = !match;
+      const target = el.querySelector(".directory-item__text");
+      if (target) {
+        target.innerHTML = highlightTerm(label, query);
+      }
+      if (match) visible += 1;
+    });
+
+    if (empty) {
+      empty.hidden = visible > 0;
+      empty.setAttribute("aria-hidden", visible > 0 ? "true" : "false");
+    }
+
+    list.setAttribute("aria-busy", "false");
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderDirectorySearch);
+  renderDirectorySearch();
+}
+</script>
 <script type="module" src="./app.js?v=161"></script>
 </body>
 </html>

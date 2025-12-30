@@ -1079,8 +1079,9 @@ function renderCxp(){
   const now = todayISO();
   for(const r of rows){
     const editing = (editMode.section === "cxp" && editMode.id === r.id);
-    const overdue = r.estado!=="Pagado" && r.vence && r.vence < now;
-    const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
+    const isPaid = String(r.estado || "").toLowerCase() === "pagado";
+    const overdue = !isPaid && r.vence && r.vence < now;
+    const badgeClass = isPaid ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
 
     if (editing) tr.classList.add("editing-row");
@@ -1094,6 +1095,11 @@ function renderCxp(){
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
         <td class="actions-cell">
+          ${
+  !isPaid
+    ? `<button class="ghost" data-act="pay" data-id="${r.id}" aria-label="Marcar pagado ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Marcar pagado</button>`
+    : ""
+}
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
         </td>`;
@@ -1128,6 +1134,7 @@ function renderCxp(){
     else if (act === "edit") editCxp(id);
     else if (act === "save") saveCxp(id);
     else if (act === "cancel") cancelEdit();
+    else if (act === "pay") window.markCxpPaid(id);
   };
 }
 
@@ -1403,12 +1410,52 @@ function markCxcPaid(id) {
   state.active = active;
 
   // refrescar todo
-renderAll();
+  renderAll();
 
   log.info("✅ CxC marcada como pagada correctamente", { id });
 }
 
 window.markCxcPaid = markCxcPaid;
+
+function markCxpPaid(id) {
+  log.info("🔥 markCxpPaid ejecutándose", { id });
+
+  const active = getActive();
+  active.cxp ??= [];
+  active.gastos ??= [];
+
+  const idx = active.cxp.findIndex(c => c.id === id);
+  if (idx < 0) {
+    log.warn("❌ No se encontró la CxP", { id });
+    return;
+  }
+
+  const ok = confirm("Marcar como pagado y crear egreso automáticamente?");
+  log.info("Confirmación de pago de CxP", { ok });
+  if (!ok) return;
+
+  const cxp = active.cxp[idx];
+  active.cxp[idx] = { ...cxp, estado: "Pagado", pagadoEn: todayISO() };
+
+  active.gastos.push({
+    id: "gas_" + uid(),
+    fecha: todayISO(),
+    concepto: cxp.concepto || cxp.proveedor || "Pago de CxP",
+    categoria: cxp.proveedor || "",
+    monto: Number(cxp.monto || 0),
+    notas: cxp.notas || "",
+    origen: "CXP",
+    refId: cxp.id
+  });
+
+  saveActiveData(active);
+  state.active = active;
+  renderAll();
+
+  log.info("✅ CxP marcada como pagada correctamente", { id });
+}
+
+window.markCxpPaid = markCxpPaid;
 
 
 

@@ -12,20 +12,98 @@ html,body{height:100%;}
 body{
   margin:0; background:linear-gradient(180deg,#09090a,#0f0f14);
   color:var(--text); font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+  padding-top: 170px;
 }
 a{color:inherit}
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
 header{
-  position:sticky; top:0; z-index:20;
+  position:fixed; top:0; left:0; right:0; z-index:30;
   backdrop-filter: blur(10px);
   background: rgba(10,10,12,.7);
   border-bottom: 1px solid var(--border);
 }
-.header-inner{max-width:1100px;margin:0 auto;padding:14px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;}
+.header-inner{
+  max-width:1100px;
+  margin:0 auto;
+  padding:14px 14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  align-items:center;
+}
+.header-search{
+  justify-self:end;
+  width:100%;
+  max-width:360px;
+  display:none;
+}
+.section-links{
+  grid-column: 1 / -1;
+  display:none;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.section-links a,
+.section-links button{
+  padding:9px 12px;
+  border-radius: 999px;
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.04);
+  text-decoration:none;
+  font-weight:700;
+  color:var(--text);
+}
+.directory-toggle-wrap{
+  grid-column: 1 / -1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.directory-toggle{
+  color: var(--text);
+  font-weight:800;
+}
+.directory-menu-open .section-links{
+  display:flex;
+}
+.section-links button{
+  cursor:pointer;
+}
+.section-links button.active{
+  background: rgba(255,255,255,.12);
+}
+@media(max-width:520px){
+  .header-inner{
+    grid-template-columns: 1fr;
+  align-items:flex-start;
+  }
+  body{padding-top: 220px;}
+}
+.view-directory .header-search{
+  display:block;
+}
 .brand{display:flex;gap:10px;align-items:center}
 .brand img{width:32px;height:32px;border-radius:10px;border:1px solid var(--border);}
 .brand .t{display:flex;flex-direction:column;line-height:1.1}
 .brand .t strong{font-size:14px}
 .brand .t span{font-size:12px;color:var(--muted)}
+.nav{
+  display:flex; gap:8px; flex-wrap:wrap;
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 14px 14px;
+}
 .container{max-width:1100px;margin:0 auto;padding:14px; padding-bottom:260px; position:relative;}
 .tab-hero{
   position:absolute;
@@ -217,4 +295,108 @@ footer{
   tr.editing-row .actions-cell button{
     flex:1 1 140px;
   }
+}
+.directory{
+  margin:20px 0 10px;
+}
+.directory-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap:12px;
+}
+.directory-card{
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding:12px;
+  background: rgba(255,255,255,.03);
+  box-shadow: var(--shadow);
+}
+.directory-form{
+  display:grid;
+  gap:10px;
+  margin-bottom:10px;
+}
+.directory-form__row label{
+  font-size:12px;
+  color:var(--muted);
+}
+.directory-form__actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.directory-item__actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.directory-item__main{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  flex:1;
+}
+.directory-item__hint{
+  color:var(--muted);
+}
+.directory-item__tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.directory-card__title{
+  margin:0 0 10px;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+.directory-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.directory-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0,0,0,.25);
+}
+.directory-item__text mark{
+  background: rgba(255,255,255,.25);
+  color:inherit;
+  padding:1px 3px;
+  border-radius:6px;
+}
+.tag{
+  border-radius: 999px;
+  padding:6px 10px;
+  border:1px solid var(--border);
+  font-size:12px;
+  color:var(--muted);
+  background: rgba(255,255,255,.05);
+  white-space:nowrap;
+}
+.directory-empty{
+  margin:10px 0 0;
+  font-size:12px;
+  color:var(--muted);
+}
+.directory-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+.directory-panel[hidden],
+#financePanel[hidden]{
+  display:none;
+}
+.view-directory .nav{
+  display:none;
 }

@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<header>
+<header class="site-header">
   <div class="header-inner">
     <div class="brand">
       <img src="icon-512.png" alt="Xtreme Academy"/>
@@ -20,22 +20,108 @@
         <span id="activeTemplateLabel">Plantilla: —</span>
       </div>
     </div>
-    <div class="nav" role="tablist" aria-label="Secciones">
-      <button data-tab="dashboard" class="active">Resumen</button>
-      <button data-tab="ingresos">Ingresos</button>
-      <button data-tab="gastos">Egresos</button>
-      <button data-tab="cxc">Por cobrar</button>
-      <button data-tab="cxp">Por pagar</button>
-      <button data-tab="inventario">Inventario</button>
-      <button data-tab="alumnos">Alumnos</button>
-      <button data-tab="plantillas">Plantillas</button>
-    </div>
+    <form class="header-search" role="search" aria-label="Buscador de clases, profes y alumnos">
+      <label class="sr-only" for="directorySearch">Buscar en el listado</label>
+      <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
+    </form>
+    <nav class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
+      <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
+      <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
+      <button type="button" data-directory-target="alumnos" aria-controls="directoryPanel">Alumnos</button>
+    </nav>
+  </div>
+  <div class="nav" role="tablist" aria-label="Secciones financieras">
+    <button data-tab="dashboard" class="active">Resumen</button>
+    <button data-tab="ingresos">Ingresos</button>
+    <button data-tab="gastos">Egresos</button>
+    <button data-tab="cxc">Por cobrar</button>
+    <button data-tab="cxp">Por pagar</button>
+    <button data-tab="inventario">Inventario</button>
+    <button data-tab="alumnos">Alumnos</button>
+    <button data-tab="plantillas">Plantillas</button>
   </div>
 </header>
 
 <div id="appAlerts" class="app-alerts" aria-live="polite" aria-atomic="true"></div>
 
-<main class="container">
+<main id="directoryPanel" class="container directory-panel" aria-label="Directorio académico">
+  <section class="directory" aria-label="Atajos a clases, profes y alumnos">
+    <div class="directory-grid">
+      <article class="directory-card" id="clases">
+        <header class="directory-card__title">Clases</header>
+        <form class="directory-form" id="classForm" aria-label="Agregar o editar clase">
+          <div class="directory-form__row">
+            <label for="className">Nombre</label>
+            <input id="className" name="className" required placeholder="Ej: Infantiles" />
+          </div>
+          <div class="directory-form__row">
+            <label for="classSchedule">Horario</label>
+            <input id="classSchedule" name="classSchedule" placeholder="Ej: Lunes 18:00" />
+          </div>
+          <div class="directory-form__row">
+            <label for="classLocation">Sede</label>
+            <input id="classLocation" name="classLocation" placeholder="Ej: Do Jang Norte" />
+          </div>
+          <div class="directory-form__actions">
+            <button class="primary" type="submit" id="classSaveBtn">Guardar clase</button>
+            <button class="ghost" type="button" id="classCancelBtn">Cancelar</button>
+          </div>
+          <input type="hidden" id="classId" />
+        </form>
+        <div class="directory-list" id="classesList" data-filter-section="clases" role="list"></div>
+        <p class="directory-empty" aria-live="polite" hidden>Sin clases para este término.</p>
+      </article>
+      <article class="directory-card" id="profes">
+        <header class="directory-card__title">Profes</header>
+        <form class="directory-form" id="teacherForm" aria-label="Agregar o editar profesor">
+          <div class="directory-form__row">
+            <label for="teacherName">Nombre</label>
+            <input id="teacherName" name="teacherName" required placeholder="Ej: Sensei Lucía Suárez" />
+          </div>
+          <div class="directory-form__row">
+            <label for="teacherFocus">Especialidad / nivel</label>
+            <input id="teacherFocus" name="teacherFocus" placeholder="Ej: Infantiles" />
+          </div>
+          <div class="directory-form__row">
+            <label for="teacherClasses">Clases asignadas</label>
+            <select id="teacherClasses" name="teacherClasses" multiple aria-label="Seleccionar clases para el profesor"></select>
+            <p class="small">Usá Ctrl/Cmd para seleccionar varias.</p>
+          </div>
+          <div class="directory-form__actions">
+            <button class="primary" type="submit" id="teacherSaveBtn">Guardar profesor</button>
+            <button class="ghost" type="button" id="teacherCancelBtn">Cancelar</button>
+          </div>
+          <input type="hidden" id="teacherId" />
+        </form>
+        <div class="directory-list" id="teachersList" data-filter-section="profes" role="list"></div>
+        <p class="directory-empty" aria-live="polite" hidden>Sin profes que coincidan.</p>
+      </article>
+      <article class="directory-card" id="alumnos">
+        <header class="directory-card__title">Alumnos</header>
+        <ul class="directory-list" data-filter-section="alumnos" role="list">
+          <li class="directory-item" data-label="Juan Pérez" role="listitem">
+            <span class="directory-item__text">Juan Pérez</span>
+            <span class="tag">Básico</span>
+          </li>
+          <li class="directory-item" data-label="Lucía Martínez" role="listitem">
+            <span class="directory-item__text">Lucía Martínez</span>
+            <span class="tag">BBC</span>
+          </li>
+          <li class="directory-item" data-label="Camila Ríos" role="listitem">
+            <span class="directory-item__text">Camila Ríos</span>
+            <span class="tag">Líder</span>
+          </li>
+        </ul>
+        <p class="directory-empty" aria-live="polite" hidden>Sin alumnos para mostrar.</p>
+      </article>
+    </div>
+    <div class="directory-actions">
+      <button class="ghost" type="button" id="backToFinanceBtn">Volver a finanzas</button>
+    </div>
+  </section>
+</main>
+
+<main id="financePanel" class="container">
 
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab">
@@ -610,6 +696,365 @@
   </div>
 </footer>
 
+<script type="module">
+import { highlightTerm, matchesQuery, uid } from "./utils.js";
+
+const searchInput = document.getElementById("directorySearch");
+
+function getDirectories() {
+  return Array.from(document.querySelectorAll("[data-filter-section]")).map((list) => ({
+    list,
+    items: Array.from(list.querySelectorAll("[data-label]")).map((item) => ({
+      el: item,
+      label: item.dataset.label || item.textContent || ""
+    })),
+    empty: list.parentElement.querySelector(".directory-empty")
+  }));
+}
+
+function renderDirectorySearch() {
+  const query = searchInput?.value || "";
+  const directories = getDirectories();
+
+  directories.forEach(({ list, items, empty }) => {
+    let visible = 0;
+
+    items.forEach(({ el, label }) => {
+      const match = matchesQuery(label, query);
+      el.hidden = !match;
+      const target = el.querySelector(".directory-item__text");
+      if (target) {
+        target.innerHTML = highlightTerm(label, query);
+      }
+      if (match) visible += 1;
+    });
+
+    if (empty) {
+      empty.hidden = visible > 0;
+      empty.setAttribute("aria-hidden", visible > 0 ? "true" : "false");
+    }
+
+    list.setAttribute("aria-busy", "false");
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderDirectorySearch);
+  renderDirectorySearch();
+}
+
+const directoryPanel = document.getElementById("directoryPanel");
+const financePanel = document.getElementById("financePanel");
+const directoryButtons = Array.from(document.querySelectorAll("[data-directory-target]"));
+const backToFinanceBtn = document.getElementById("backToFinanceBtn");
+const DIRECTORY_STORE_KEY = "xa_directory_v1";
+
+let directoryState = {
+  clases: [
+    { id: uid(), nombre: "Infantiles", horario: "Lunes 18:00", sede: "Do Jang Norte" },
+    { id: uid(), nombre: "Juveniles", horario: "Martes 19:00", sede: "Do Jang Sur" },
+    { id: uid(), nombre: "Adultos", horario: "Jueves 20:00", sede: "Sede Central" }
+  ],
+  profes: [
+    { id: uid(), nombre: "Sensei Lucía Suárez", foco: "Infantiles", clases: [] },
+    { id: uid(), nombre: "Profe Martín Vega", foco: "Juveniles", clases: [] },
+    { id: uid(), nombre: "Coach Ana Díaz", foco: "Adultos", clases: [] }
+  ]
+};
+
+function loadDirectoryState() {
+  try {
+    const raw = localStorage.getItem(DIRECTORY_STORE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && typeof parsed === "object") {
+      directoryState = {
+        clases: Array.isArray(parsed.clases) ? parsed.clases : directoryState.clases,
+        profes: Array.isArray(parsed.profes) ? parsed.profes : directoryState.profes
+      };
+    }
+  } catch (err) {
+    console.warn("No se pudo cargar el directorio", err);
+  }
+}
+
+function saveDirectoryState() {
+  try {
+    localStorage.setItem(DIRECTORY_STORE_KEY, JSON.stringify(directoryState));
+  } catch (err) {
+    console.warn("No se pudo guardar el directorio", err);
+  }
+}
+
+loadDirectoryState();
+
+function setActiveDirectoryButton(targetId) {
+  directoryButtons.forEach((btn) => {
+    const isActive = btn.dataset.directoryTarget === targetId;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function showDirectory(targetId) {
+  if (directoryPanel) directoryPanel.hidden = false;
+  if (financePanel) financePanel.hidden = true;
+  document.body.classList.add("view-directory");
+  setActiveDirectoryButton(targetId);
+
+  if (targetId) {
+    const card = document.getElementById(targetId);
+    if (card) {
+      card.setAttribute("tabindex", "-1");
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      card.focus({ preventScroll: true });
+    }
+  }
+}
+
+function showFinance() {
+  if (directoryPanel) directoryPanel.hidden = true;
+  if (financePanel) financePanel.hidden = false;
+  document.body.classList.remove("view-directory");
+  setActiveDirectoryButton("");
+}
+
+directoryButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetId = btn.dataset.directoryTarget;
+    showDirectory(targetId);
+    renderDirectorySearch();
+  });
+});
+
+if (backToFinanceBtn) {
+  backToFinanceBtn.addEventListener("click", showFinance);
+}
+
+// Start in vista finanzas
+showFinance();
+
+/* ----- Gestión de clases ----- */
+const classForm = document.getElementById("classForm");
+const classNameInput = document.getElementById("className");
+const classScheduleInput = document.getElementById("classSchedule");
+const classLocationInput = document.getElementById("classLocation");
+const classIdInput = document.getElementById("classId");
+const classCancelBtn = document.getElementById("classCancelBtn");
+const classesList = document.getElementById("classesList");
+
+function resetClassForm() {
+  classForm?.reset();
+  classIdInput.value = "";
+  classNameInput?.focus();
+}
+
+function handleClassSubmit(e) {
+  e.preventDefault();
+  const payload = {
+    nombre: (classNameInput.value || "").trim(),
+    horario: (classScheduleInput.value || "").trim(),
+    sede: (classLocationInput.value || "").trim()
+  };
+  if (!payload.nombre) return;
+
+  const id = classIdInput.value;
+  if (id) {
+    const idx = directoryState.clases.findIndex((c) => c.id === id);
+    if (idx >= 0) directoryState.clases[idx] = { ...directoryState.clases[idx], ...payload };
+  } else {
+    directoryState.clases.push({ id: uid(), ...payload });
+  }
+
+  saveDirectoryState();
+  renderClasses();
+  renderTeachers();
+  renderDirectorySearch();
+  resetClassForm();
+}
+
+function handleClassEdit(id) {
+  const c = directoryState.clases.find((x) => x.id === id);
+  if (!c) return;
+  classNameInput.value = c.nombre || "";
+  classScheduleInput.value = c.horario || "";
+  classLocationInput.value = c.sede || "";
+  classIdInput.value = c.id;
+  classNameInput.focus();
+}
+
+function handleClassDelete(id) {
+  directoryState.clases = directoryState.clases.filter((c) => c.id !== id);
+  directoryState.profes = directoryState.profes.map((p) => ({
+    ...p,
+    clases: (p.clases || []).filter((cid) => cid !== id)
+  }));
+  saveDirectoryState();
+  renderClasses();
+  renderTeachers();
+  renderDirectorySearch();
+}
+
+function renderClasses() {
+  if (!classesList) return;
+  classesList.innerHTML = "";
+  const items = directoryState.clases;
+  const empty = classesList.parentElement?.querySelector(".directory-empty");
+  if (empty) {
+    empty.hidden = items.length > 0;
+    empty.setAttribute("aria-hidden", items.length > 0 ? "true" : "false");
+  }
+
+  items.forEach((c) => {
+    const label = `${c.nombre}${c.horario ? ` · ${c.horario}` : ""}`;
+    const item = document.createElement("div");
+    item.className = "directory-item";
+    item.setAttribute("role", "listitem");
+    item.dataset.label = label;
+    item.innerHTML = `
+      <span class="directory-item__text">${highlightTerm(label, searchInput?.value || "")}</span>
+      <div class="directory-item__actions">
+        ${c.sede ? `<span class="tag">${highlightTerm(c.sede, searchInput?.value || "")}</span>` : ""}
+        <button type="button" class="ghost" data-act="edit" aria-label="Editar clase ${label}" data-id="${c.id}">Editar</button>
+        <button type="button" class="ghost danger" data-act="del" aria-label="Borrar clase ${label}" data-id="${c.id}">Borrar</button>
+      </div>
+    `;
+    classesList.appendChild(item);
+  });
+
+  classesList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    if (act === "edit") handleClassEdit(id);
+    if (act === "del") handleClassDelete(id);
+  }, { once: true });
+
+  buildTeacherClassOptions();
+}
+
+classForm?.addEventListener("submit", handleClassSubmit);
+classCancelBtn?.addEventListener("click", resetClassForm);
+
+/* ----- Gestión de profes ----- */
+const teacherForm = document.getElementById("teacherForm");
+const teacherNameInput = document.getElementById("teacherName");
+const teacherFocusInput = document.getElementById("teacherFocus");
+const teacherClassesSelect = document.getElementById("teacherClasses");
+const teacherIdInput = document.getElementById("teacherId");
+const teacherCancelBtn = document.getElementById("teacherCancelBtn");
+const teachersList = document.getElementById("teachersList");
+
+function buildTeacherClassOptions() {
+  if (!teacherClassesSelect) return;
+  const selected = new Set(Array.from(teacherClassesSelect.selectedOptions).map((o) => o.value));
+  teacherClassesSelect.innerHTML = "";
+  directoryState.clases.forEach((c) => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.nombre}${c.horario ? ` · ${c.horario}` : ""}`;
+    if (selected.has(c.id)) opt.selected = true;
+    teacherClassesSelect.appendChild(opt);
+  });
+}
+
+function resetTeacherForm() {
+  teacherForm?.reset();
+  teacherIdInput.value = "";
+  buildTeacherClassOptions();
+  teacherNameInput?.focus();
+}
+
+function handleTeacherSubmit(e) {
+  e.preventDefault();
+  const payload = {
+    nombre: (teacherNameInput.value || "").trim(),
+    foco: (teacherFocusInput.value || "").trim(),
+    clases: Array.from(teacherClassesSelect?.selectedOptions || []).map((o) => o.value)
+  };
+  if (!payload.nombre) return;
+
+  const id = teacherIdInput.value;
+  if (id) {
+    const idx = directoryState.profes.findIndex((p) => p.id === id);
+    if (idx >= 0) directoryState.profes[idx] = { ...directoryState.profes[idx], ...payload };
+  } else {
+    directoryState.profes.push({ id: uid(), ...payload });
+  }
+  saveDirectoryState();
+  renderTeachers();
+  renderDirectorySearch();
+  resetTeacherForm();
+}
+
+function handleTeacherEdit(id) {
+  const p = directoryState.profes.find((x) => x.id === id);
+  if (!p) return;
+  teacherNameInput.value = p.nombre || "";
+  teacherFocusInput.value = p.foco || "";
+  buildTeacherClassOptions();
+  Array.from(teacherClassesSelect.options).forEach((opt) => {
+    opt.selected = (p.clases || []).includes(opt.value);
+  });
+  teacherIdInput.value = p.id;
+  teacherNameInput.focus();
+}
+
+function handleTeacherDelete(id) {
+  directoryState.profes = directoryState.profes.filter((p) => p.id !== id);
+  saveDirectoryState();
+  renderTeachers();
+  renderDirectorySearch();
+}
+
+function renderTeachers() {
+  if (!teachersList) return;
+  teachersList.innerHTML = "";
+  const classesById = Object.fromEntries(directoryState.clases.map((c) => [c.id, c]));
+  const empty = teachersList.parentElement?.querySelector(".directory-empty");
+  if (empty) {
+    empty.hidden = directoryState.profes.length > 0;
+    empty.setAttribute("aria-hidden", directoryState.profes.length > 0 ? "true" : "false");
+  }
+
+  directoryState.profes.forEach((p) => {
+    const classLabels = (p.clases || []).map((id) => classesById[id]?.nombre || "").filter(Boolean);
+    const label = p.nombre;
+    const item = document.createElement("div");
+    item.className = "directory-item";
+    item.setAttribute("role", "listitem");
+    item.dataset.label = label;
+    item.innerHTML = `
+      <div class="directory-item__main">
+        <span class="directory-item__text">${highlightTerm(label, searchInput?.value || "")}</span>
+        ${p.foco ? `<span class="small directory-item__hint">${highlightTerm(p.foco, searchInput?.value || "")}</span>` : ""}
+        ${classLabels.length ? `<div class="directory-item__tags">${classLabels.map((t) => `<span class="tag">${highlightTerm(t, searchInput?.value || "")}</span>`).join("")}</div>` : ""}
+      </div>
+      <div class="directory-item__actions">
+        <button type="button" class="ghost" data-act="edit" aria-label="Editar profesor ${label}" data-id="${p.id}">Editar</button>
+        <button type="button" class="ghost danger" data-act="del" aria-label="Borrar profesor ${label}" data-id="${p.id}">Borrar</button>
+      </div>
+    `;
+    teachersList.appendChild(item);
+  });
+
+  teachersList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    if (act === "edit") handleTeacherEdit(id);
+    if (act === "del") handleTeacherDelete(id);
+  }, { once: true });
+}
+
+teacherForm?.addEventListener("submit", handleTeacherSubmit);
+teacherCancelBtn?.addEventListener("click", resetTeacherForm);
+
+renderClasses();
+renderTeachers();
+renderDirectorySearch();
+</script>
 <script type="module" src="./app.js?v=161"></script>
 </body>
 </html>

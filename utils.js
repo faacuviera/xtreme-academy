@@ -39,3 +39,49 @@ export function toCSV(rows, headers) {
     .join("\n");
   return head + body + "\n";
 }
+
+export function matchesQuery(value, query) {
+  const term = (query || "").trim().toLowerCase();
+  if (!term) return true;
+
+  if (Array.isArray(value)) {
+    return value.some((item) => matchesQuery(item, term));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some((item) => matchesQuery(item, term));
+  }
+
+  return String(value ?? "").toLowerCase().includes(term);
+}
+
+export function filterByQuery(list, query) {
+  const items = Array.isArray(list) ? list : [];
+  if (!query) return items;
+  return items.filter((item) => matchesQuery(item, query));
+}
+
+export function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"]/g, (c) => {
+    switch (c) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case "\"": return "&quot;";
+      default: return c;
+    }
+  });
+}
+
+function escapeRegExp(value) {
+  return String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function highlightTerm(text, term) {
+  const rawText = escapeHtml(text);
+  const normalized = (term || "").trim();
+  if (!normalized) return rawText;
+
+  const pattern = new RegExp(`(${escapeRegExp(normalized)})`, "gi");
+  return rawText.replace(pattern, "<mark>$1</mark>");
+}

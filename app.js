@@ -1079,8 +1079,9 @@ function renderCxp(){
   const now = todayISO();
   for(const r of rows){
     const editing = (editMode.section === "cxp" && editMode.id === r.id);
-    const overdue = r.estado!=="Pagado" && r.vence && r.vence < now;
-    const badgeClass = r.estado==="Pagado" ? "ok" : (overdue ? "due" : "");
+    const isPaid = String(r.estado || "").toLowerCase() === "pagado";
+    const overdue = !isPaid && r.vence && r.vence < now;
+    const badgeClass = isPaid ? "ok" : (overdue ? "due" : "");
     const tr=document.createElement("tr");
 
     if (editing) tr.classList.add("editing-row");
@@ -1094,6 +1095,11 @@ function renderCxp(){
         <td><span class="badge ${badgeClass}">${overdue ? "Vencido" : (r.estado||"")}</span></td>
         <td class="note-cell">${noteHtml(r.notas)}</td>
         <td class="actions-cell">
+          ${
+  !isPaid
+    ? `<button class="ghost" data-act="pay" data-id="${r.id}" aria-label="Marcar pagado ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Marcar pagado</button>`
+    : ""
+}
           <button class="ghost" data-act="edit" data-id="${r.id}" aria-label="Editar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Editar</button>
           <button class="ghost danger" data-act="del" data-id="${r.id}" aria-label="Borrar CxP ${escAttr(r.concepto||"")} de ${escAttr(r.proveedor||"")}">Borrar</button>
         </td>`;
@@ -1128,6 +1134,7 @@ function renderCxp(){
     else if (act === "edit") editCxp(id);
     else if (act === "save") saveCxp(id);
     else if (act === "cancel") cancelEdit();
+    else if (act === "pay") window.markCxpPaid(id);
   };
 }
 
@@ -1295,6 +1302,7 @@ function saveCxp(id) {
   const montoStr  = document.getElementById(`ed_cxp_monto_${id}`)?.value || "0";
   const estado    = document.getElementById(`ed_cxp_estado_${id}`)?.value || "Pendiente";
   const notas     = document.getElementById(`ed_cxp_notas_${id}`)?.value || "";
+  const isPaid    = String(estado || "").toLowerCase() === "pagado";
 
   const vence = requireDateValue(venceRaw, "esta cuenta por pagar");
   if (!vence) return;
@@ -1304,9 +1312,16 @@ function saveCxp(id) {
   if (!concepto) return alert("El concepto no puede quedar vacío.");
 
   const active = getActive();
-  active.cxp = (active.cxp || []).map(c =>
-    c.id === id ? { ...c, proveedor, vence, concepto, monto, estado, notas } : c
-  );
+  active.cxp = (active.cxp || []).map(c => {
+    if (c.id !== id) return c;
+    const next = { ...c, proveedor, vence, concepto, monto, estado, notas };
+    if (isPaid) next.pagadoEn = c.pagadoEn || todayISO();
+    else delete next.pagadoEn;
+    return next;
+  });
+
+  const updated = (active.cxp || []).find(c => c.id === id);
+  syncCxpExpense(active, updated);
 
   setActive(active);
   persistActive(active);
@@ -1403,12 +1418,69 @@ function markCxcPaid(id) {
   state.active = active;
 
   // refrescar todo
-renderAll();
+  renderAll();
 
   log.info("✅ CxC marcada como pagada correctamente", { id });
 }
 
 window.markCxcPaid = markCxcPaid;
+
+function syncCxpExpense(active, cxp) {
+  if (!active || !cxp) return;
+
+  active.gastos ??= [];
+  const idx = active.gastos.findIndex(g => g.origen === "CXP" && g.refId === cxp.id);
+  const isPaid = String(cxp.estado || "").toLowerCase() === "pagado";
+
+  if (!isPaid) {
+    if (idx >= 0) active.gastos.splice(idx, 1);
+    return;
+  }
+
+  const payload = {
+    id: idx >= 0 ? active.gastos[idx].id : "gas_" + uid(),
+    fecha: cxp.pagadoEn || todayISO(),
+    concepto: cxp.concepto || cxp.proveedor || "Pago de CxP",
+    categoria: cxp.proveedor || "",
+    monto: Number(cxp.monto || 0),
+    notas: cxp.notas || "",
+    origen: "CXP",
+    refId: cxp.id
+  };
+
+  if (idx >= 0) active.gastos[idx] = { ...active.gastos[idx], ...payload };
+  else active.gastos.push(payload);
+}
+
+function markCxpPaid(id) {
+  log.info("🔥 markCxpPaid ejecutándose", { id });
+
+  const active = getActive();
+  active.cxp ??= [];
+
+  const idx = active.cxp.findIndex(c => c.id === id);
+  if (idx < 0) {
+    log.warn("❌ No se encontró la CxP", { id });
+    return;
+  }
+
+  const ok = confirm("Marcar como pagado y crear egreso automáticamente?");
+  log.info("Confirmación de pago de CxP", { ok });
+  if (!ok) return;
+
+  const cxp = active.cxp[idx];
+  active.cxp[idx] = { ...cxp, estado: "Pagado", pagadoEn: todayISO() };
+
+  syncCxpExpense(active, active.cxp[idx]);
+
+  saveActiveData(active);
+  state.active = active;
+  renderAll();
+
+  log.info("✅ CxP marcada como pagada correctamente", { id });
+}
+
+window.markCxpPaid = markCxpPaid;
 
 
 
@@ -1592,10 +1664,16 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
       estado: $("cxpestado").value,
       notas: $("cxpnotas").value.trim()
     };
+    const isPaid = String(data.estado || "").toLowerCase() === "pagado";
+    if (isPaid) data.pagadoEn = data.pagadoEn || todayISO();
     if(!data.proveedor){ alert("Poné el proveedor."); return; }
     if(!data.concepto){ alert("Poné el concepto."); return; }
     upsert("cxp", data, $("addCxpBtn").dataset.editId);
-    await persistActive(); clearCxpForm(); renderAll();
+    const active = state.active || getActive();
+    const saved = (active.cxp || []).find(c => c.id === data.id);
+    syncCxpExpense(active, saved);
+    state.active = active;
+    await persistActive(active); clearCxpForm(); renderAll();
   });
   $("clearCxpBtn").addEventListener("click", clearCxpForm);
 

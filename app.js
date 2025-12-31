@@ -45,6 +45,21 @@ function showSoftBanner(message) {
   }, 5200);
 }
 
+function announceLive(message, { toast = false } = {}) {
+  const host = document.getElementById("appAlerts");
+  if (!host || !message) return;
+
+  const sr = document.createElement("div");
+  sr.className = "sr-only";
+  sr.textContent = message;
+  host.appendChild(sr);
+  setTimeout(() => sr.remove(), 1200);
+
+  if (toast) {
+    showSoftBanner(message);
+  }
+}
+
 function recordStorageFailure(context, err) {
   storageStats.failures += 1;
   log.warn(`Fallo de almacenamiento (#${storageStats.failures}) en ${context}`, err);
@@ -417,14 +432,77 @@ function updateTabHero(tab){
 }
 
 function wireTabs(){
-  document.querySelectorAll(".nav button").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      const tab=btn.dataset.tab;
-      document.querySelectorAll(".tab").forEach(s=>s.hidden=true);
-      $("tab-"+tab).hidden=false;
-      updateTabHero(tab);
+  const tabButtons = Array.from(document.querySelectorAll('.nav button[data-tab]'));
+  if (!tabButtons.length) return;
+
+  const panels = Array.from(document.querySelectorAll(".tab"));
+
+  tabButtons.forEach((btn) => {
+    const tab = btn.dataset.tab;
+    const panelId = `tab-${tab}`;
+    btn.setAttribute("role", "tab");
+    btn.setAttribute("aria-controls", panelId);
+    btn.id ||= `tab-btn-${tab}`;
+    const panel = document.getElementById(panelId);
+    if (panel) {
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", btn.id);
+    }
+  });
+
+  function activateTab(btn, { announce = true } = {}) {
+    const tab = btn?.dataset.tab;
+    if (!tab) return;
+
+    tabButtons.forEach((b) => {
+      const isActive = b === btn;
+      b.classList.toggle("active", isActive);
+      b.setAttribute("aria-selected", isActive ? "true" : "false");
+      b.tabIndex = isActive ? 0 : -1;
+    });
+
+    panels.forEach((panel) => {
+      const matches = panel.id === `tab-${tab}`;
+      panel.hidden = !matches;
+      panel.setAttribute("aria-hidden", matches ? "false" : "true");
+    });
+
+    updateTabHero(tab);
+    if (announce) {
+      const label = (btn.textContent || tab || "").trim();
+      announceLive(`Pestaña “${label}” abierta.`);
+    }
+  }
+
+  function focusTabAt(index) {
+    const nextBtn = tabButtons[index];
+    if (!nextBtn) return;
+    activateTab(nextBtn);
+    nextBtn.focus();
+  }
+
+  function moveFocus(fromIndex, delta) {
+    const total = tabButtons.length;
+    const nextIndex = (fromIndex + delta + total) % total;
+    focusTabAt(nextIndex);
+  }
+
+  const initialActive = tabButtons.find((b) => b.classList.contains("active")) || tabButtons[0];
+  activateTab(initialActive, { announce: false });
+
+  tabButtons.forEach((btn, index) => {
+    btn.addEventListener("click", () => activateTab(btn));
+    btn.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+      } else {
+        return;
+      }
+
+      if (event.key === "ArrowRight") moveFocus(index, 1);
+      if (event.key === "ArrowLeft") moveFocus(index, -1);
+      if (event.key === "Home") focusTabAt(0);
+      if (event.key === "End") focusTabAt(tabButtons.length - 1);
     });
   });
 }

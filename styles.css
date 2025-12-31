@@ -12,7 +12,6 @@ html,body{height:100%;}
 body{
   margin:0; background:linear-gradient(180deg,#09090a,#0f0f14);
   color:var(--text); font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial;
-  padding-top: 170px;
 }
 a{color:inherit}
 .sr-only{
@@ -27,7 +26,8 @@ a{color:inherit}
   border:0;
 }
 header{
-  position:fixed; top:0; left:0; right:0; z-index:30;
+  position:relative;
+  z-index:30;
   backdrop-filter: blur(10px);
   background: rgba(10,10,12,.7);
   border-bottom: 1px solid var(--border);
@@ -83,12 +83,23 @@ header{
 .section-links button.active{
   background: rgba(255,255,255,.12);
 }
+.section-links .back-to-finance{
+  background: #ffffff;
+  color: #0b0b0c;
+  border-color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+.section-links .back-to-finance:hover,
+.section-links .back-to-finance:focus-visible{
+  background: #f2f2f6;
+  border-color: #f2f2f6;
+  color: #0b0b0c;
+}
 @media(max-width:520px){
   .header-inner{
     grid-template-columns: 1fr;
   align-items:flex-start;
   }
-  body{padding-top: 220px;}
 }
 .view-directory .header-search{
   display:block;
@@ -387,6 +398,40 @@ footer{
   margin:10px 0 0;
   font-size:12px;
   color:var(--muted);
+}
+.directory-auth-overlay{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:60;
+}
+.directory-auth-modal{
+  width:min(360px, 100%);
+  background: rgba(20,20,23,.96);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.directory-auth-modal h3{
+  margin:0;
+}
+.directory-auth-error{
+  min-height:18px;
+  color: var(--danger);
+}
+.directory-auth-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
 }
 .directory-actions{
   display:flex;

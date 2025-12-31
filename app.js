@@ -1374,6 +1374,7 @@ function saveInventario(id) {
   persistActive(active);
   editMode = { section: null, id: null };
   render();
+  showSoftBanner("✅ Producto guardado");
 }
 window.editInventario = editInventario;
 window.saveInventario = saveInventario;
@@ -1692,6 +1693,7 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
     if(!data.categoria || !data.producto){ alert("Poné categoría y producto."); return; }
     upsert("inventario", data, $("saveInvBtn").dataset.editId);
     await persistActive(); clearInvForm(); renderAll();
+    showSoftBanner("✅ Producto guardado");
   });
   $("clearInvBtn").addEventListener("click", clearInvForm);
 

@@ -24,6 +24,7 @@
       <label class="sr-only" for="directorySearch">Buscar en el listado</label>
       <input id="directorySearch" type="search" placeholder="Buscar clases, profes o alumnos" aria-label="Buscar en el listado" />
     </form>
+    <p id="directorySearchFeedback" class="directory-search-feedback small" aria-live="polite" aria-atomic="true"></p>
     <div class="directory-toggle-wrap">
       <button type="button" id="directoryToggle" class="ghost directory-toggle" aria-expanded="false" aria-controls="directoryMenu">Dirección general</button>
       <nav id="directoryMenu" class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
@@ -72,8 +73,8 @@
           </div>
           <input type="hidden" id="classId" />
         </form>
-        <div class="directory-list" id="classesList" data-filter-section="clases" role="list"></div>
-        <p class="directory-empty" aria-live="polite" hidden>Sin clases para este término.</p>
+        <div class="directory-list" id="classesList" data-filter-section="clases" data-section-label="Clases" role="list"></div>
+        <p class="directory-empty" data-empty-default="Sin clases para este término." aria-live="polite" hidden>Sin clases para este término.</p>
       </article>
       <article class="directory-card" id="profes">
         <header class="directory-card__title">Profes</header>
@@ -97,12 +98,12 @@
           </div>
           <input type="hidden" id="teacherId" />
         </form>
-        <div class="directory-list" id="teachersList" data-filter-section="profes" role="list"></div>
-        <p class="directory-empty" aria-live="polite" hidden>Sin profes que coincidan.</p>
+        <div class="directory-list" id="teachersList" data-filter-section="profes" data-section-label="Profes" role="list"></div>
+        <p class="directory-empty" data-empty-default="Sin profes que coincidan." aria-live="polite" hidden>Sin profes que coincidan.</p>
       </article>
       <article class="directory-card" id="alumnos">
         <header class="directory-card__title">Alumnos</header>
-        <ul class="directory-list" data-filter-section="alumnos" role="list">
+        <ul class="directory-list" data-filter-section="alumnos" data-section-label="Alumnos" role="list">
           <li class="directory-item" data-label="Juan Pérez" role="listitem">
             <span class="directory-item__text">Juan Pérez</span>
             <span class="tag">Básico</span>
@@ -116,7 +117,7 @@
             <span class="tag">Líder</span>
           </li>
         </ul>
-        <p class="directory-empty" aria-live="polite" hidden>Sin alumnos para mostrar.</p>
+        <p class="directory-empty" data-empty-default="Sin alumnos para mostrar." aria-live="polite" hidden>Sin alumnos para mostrar.</p>
       </article>
     </div>
   </section>
@@ -701,7 +702,23 @@
 import { highlightTerm, matchesQuery, uid } from "./utils.js";
 
 const searchInput = document.getElementById("directorySearch");
+const searchFeedback = document.getElementById("directorySearchFeedback");
 const bodyEl = document.body;
+
+function showDirectoryNotice(message) {
+  const host = document.getElementById("appAlerts");
+  if (!host || !message) return;
+
+  const el = document.createElement("div");
+  el.className = "app-alert";
+  el.textContent = message;
+  host.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("visible"));
+  setTimeout(() => {
+    el.classList.remove("visible");
+    setTimeout(() => el.remove(), 200);
+  }, 3600);
+}
 
 function getDirectories() {
   return Array.from(document.querySelectorAll("[data-filter-section]")).map((list) => ({
@@ -715,10 +732,14 @@ function getDirectories() {
 }
 
 function renderDirectorySearch() {
-  const query = searchInput?.value || "";
+  const query = (searchInput?.value || "").trim();
   const directories = getDirectories();
+  let totalVisible = 0;
+  const sectionCounts = [];
 
   directories.forEach(({ list, items, empty }) => {
+    const sectionLabel = list.dataset.sectionLabel || "";
+    list.setAttribute("aria-busy", "true");
     let visible = 0;
 
     items.forEach(({ el, label }) => {
@@ -732,12 +753,32 @@ function renderDirectorySearch() {
     });
 
     if (empty) {
+      const defaultMsg = empty.dataset.emptyDefault || empty.textContent || "";
+      const label = sectionLabel ? sectionLabel.toLowerCase() : "resultados";
+      empty.textContent = query ? `Sin ${label} que coincidan con “${query}”.` : defaultMsg;
       empty.hidden = visible > 0;
       empty.setAttribute("aria-hidden", visible > 0 ? "true" : "false");
     }
 
+    sectionCounts.push({ label: sectionLabel, count: visible });
+    totalVisible += visible;
     list.setAttribute("aria-busy", "false");
   });
+
+  if (searchFeedback) {
+    if (!query) {
+      const totalItems = sectionCounts.reduce((acc, curr) => acc + curr.count, 0);
+      searchFeedback.textContent = `Mostrando todo el directorio (${totalItems} elementos).`;
+    } else if (totalVisible > 0) {
+      const detail = sectionCounts
+        .filter((s) => s.count > 0)
+        .map((s) => `${s.count} en ${s.label}`)
+        .join(" · ");
+      searchFeedback.textContent = `${totalVisible} resultado${totalVisible === 1 ? "" : "s"} para “${query}”${detail ? `: ${detail}` : ""}.`;
+    } else {
+      searchFeedback.textContent = `Sin coincidencias para “${query}” en el directorio.`;
+    }
+  }
 }
 
 if (searchInput) {
@@ -787,8 +828,10 @@ function loadDirectoryState() {
 function saveDirectoryState() {
   try {
     localStorage.setItem(DIRECTORY_STORE_KEY, JSON.stringify(directoryState));
+    showDirectoryNotice("✅ Cambios guardados en el directorio");
   } catch (err) {
     console.warn("No se pudo guardar el directorio", err);
+    showDirectoryNotice("⚠️ No se pudo guardar el directorio");
   }
 }
 
@@ -875,15 +918,19 @@ function ensureDirectoryAccess() {
   }
   if (authPromptOpen) return Promise.resolve(false);
   return new Promise((resolve) => {
+    const lastFocused = document.activeElement;
     authPromptOpen = true;
     const overlay = document.createElement("div");
     overlay.className = "directory-auth-overlay";
     overlay.innerHTML = `
-      <div class="directory-auth-modal" role="dialog" aria-modal="true" aria-label="Acceso al directorio">
-        <h3>Ingresá la contraseña</h3>
-        <p class="small">Necesitamos la clave para entrar al directorio.</p>
+      <div class="directory-auth-modal" role="dialog" aria-modal="true" aria-labelledby="directoryAuthTitle" aria-describedby="directoryAuthDesc" tabindex="-1">
+        <div class="directory-auth-modal__header">
+          <h3 id="directoryAuthTitle">Ingresá la contraseña</h3>
+          <button type="button" class="ghost directory-auth-close" data-auth-close aria-label="Cerrar diálogo de contraseña">✕</button>
+        </div>
+        <p class="small" id="directoryAuthDesc">Necesitamos la clave para entrar al directorio.</p>
         <label class="sr-only" for="directoryPasswordInput">Contraseña</label>
-        <input id="directoryPasswordInput" type="password" autocomplete="current-password" placeholder="********" />
+        <input id="directoryPasswordInput" type="password" autocomplete="current-password" placeholder="********" inputmode="text" />
         <div class="directory-auth-error small" aria-live="polite" aria-atomic="true"></div>
         <div class="directory-auth-actions">
           <button type="button" class="ghost" data-auth-cancel>Cancelar</button>
@@ -895,11 +942,15 @@ function ensureDirectoryAccess() {
     const input = overlay.querySelector("#directoryPasswordInput");
     const submitBtn = overlay.querySelector("[data-auth-submit]");
     const cancelBtn = overlay.querySelector("[data-auth-cancel]");
+    const closeBtn = overlay.querySelector("[data-auth-close]");
     const errorBox = overlay.querySelector(".directory-auth-error");
+    const modal = overlay.querySelector(".directory-auth-modal");
 
     function cleanup() {
       authPromptOpen = false;
       overlay.remove();
+      document.body.classList.remove("modal-open");
+      lastFocused?.focus?.();
     }
 
     function deny(msg) {
@@ -937,8 +988,27 @@ function ensureDirectoryAccess() {
       if (e.target === overlay) cancel();
     });
 
+    function trapFocus(e) {
+      if (e.key !== "Tab") return;
+      const focusable = Array.from(overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+        .filter((el) => !el.hasAttribute("disabled"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    overlay.addEventListener("keydown", trapFocus);
+
     if (submitBtn) submitBtn.addEventListener("click", handleSubmit);
     if (cancelBtn) cancelBtn.addEventListener("click", cancel);
+    if (closeBtn) closeBtn.addEventListener("click", cancel);
     if (input) {
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -953,7 +1023,9 @@ function ensureDirectoryAccess() {
     }
 
     document.body.appendChild(overlay);
-    input?.focus();
+    document.body.classList.add("modal-open");
+    (modal || input)?.focus();
+    input?.select?.();
   });
 }
 

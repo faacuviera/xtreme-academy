@@ -278,6 +278,17 @@ footer{
   transform: translateY(0);
 }
 
+.directory-search-feedback{
+  display:none;
+  margin:0;
+  color:var(--muted);
+  min-width:140px;
+}
+.view-directory .directory-search-feedback{
+  display:block;
+  grid-column: 1 / -1;
+}
+
 /* Mejoras de edición en mobile: que textarea y botones no se superpongan */
 @media(max-width:780px){
   table{min-width:0;}
@@ -421,8 +432,20 @@ footer{
   flex-direction:column;
   gap:10px;
 }
+.directory-auth-modal__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
 .directory-auth-modal h3{
   margin:0;
+}
+.directory-auth-close{
+  border-radius: 50%;
+  width:32px;
+  height:32px;
+  padding:0;
 }
 .directory-auth-error{
   min-height:18px;
@@ -432,6 +455,9 @@ footer{
   display:flex;
   gap:10px;
   justify-content:flex-end;
+}
+.modal-open{
+  overflow:hidden;
 }
 .directory-actions{
   display:flex;

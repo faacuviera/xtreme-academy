@@ -399,6 +399,40 @@ footer{
   font-size:12px;
   color:var(--muted);
 }
+.directory-auth-overlay{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:60;
+}
+.directory-auth-modal{
+  width:min(360px, 100%);
+  background: rgba(20,20,23,.96);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.directory-auth-modal h3{
+  margin:0;
+}
+.directory-auth-error{
+  min-height:18px;
+  color: var(--danger);
+}
+.directory-auth-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
 .directory-actions{
   display:flex;
   justify-content:flex-end;

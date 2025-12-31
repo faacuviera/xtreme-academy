@@ -11,6 +11,11 @@ import {
   toCSV,
   download
 } from "./utils.js";
+import {
+  validateDateInput,
+  validatePositiveAmount,
+  validateRequiredText
+} from "./validation.js";
 
 const $ = (id)=>document.getElementById(id);
 /* ---------- Logging & non-fatal notifications ---------- */
@@ -590,21 +595,123 @@ function requireDateValue(value, contextLabel){
 }
 
 function requireMontoValue(value, contextLabel){
-  const raw = value ?? "";
-  if (String(raw).trim() === "") {
-    alert(`Ingresá el monto de ${contextLabel}; no puede quedar vacío.`);
+  const res = validatePositiveAmount(value, contextLabel);
+  if (res.error) {
+    alert(res.error);
     return null;
   }
-  const monto = Number(raw);
-  if (Number.isNaN(monto)) {
-    alert(`El monto de ${contextLabel} tiene que ser un número válido.`);
-    return null;
+  return res.amount;
+}
+
+/* ---------- Inline form validation helpers ---------- */
+const FINANCE_FIELD_RULES = {
+  ingresos: {
+    submitId: "addIngresoBtn",
+    fields: [
+      { id: "inNombre", key: "nombre", kind: "text", label: "el nombre" },
+      { id: "inFecha", key: "fecha", kind: "date", label: "este ingreso" },
+      { id: "inConcepto", key: "concepto", kind: "text", label: "el concepto" },
+      { id: "inMonto", key: "monto", kind: "amount", label: "este ingreso" }
+    ]
+  },
+  gastos: {
+    submitId: "addGastoBtn",
+    fields: [
+      { id: "gaConcepto", key: "concepto", kind: "text", label: "qué pagaste" },
+      { id: "gaFecha", key: "fecha", kind: "date", label: "este egreso" },
+      { id: "gaMonto", key: "monto", kind: "amount", label: "este egreso" }
+    ]
+  },
+  cxc: {
+    submitId: "addCxcBtn",
+    fields: [
+      { id: "cxcnombre", key: "nombre", kind: "text", label: "el alumno o cliente" },
+      { id: "cxcvence", key: "vence", kind: "date", label: "esta cuenta por cobrar" },
+      { id: "cxcconcepto", key: "concepto", kind: "text", label: "el concepto" },
+      { id: "cxcmonto", key: "monto", kind: "amount", label: "esta cuenta por cobrar" }
+    ]
+  },
+  cxp: {
+    submitId: "addCxpBtn",
+    fields: [
+      { id: "cxpproveedor", key: "proveedor", kind: "text", label: "el proveedor o servicio" },
+      { id: "cxpvence", key: "vence", kind: "date", label: "esta cuenta por pagar" },
+      { id: "cxpconcepto", key: "concepto", kind: "text", label: "el concepto" },
+      { id: "cxpmonto", key: "monto", kind: "amount", label: "esta cuenta por pagar" }
+    ]
   }
-  if (monto < 0) {
-    alert(`El monto de ${contextLabel} no puede ser negativo.`);
-    return null;
+};
+
+function ensureFieldMessage(input) {
+  if (!input) return null;
+  const parent = input.parentElement || input.closest("div") || input;
+  let msg = parent.querySelector(`[data-field-msg-for="${input.id}"]`);
+  if (msg) return msg;
+
+  msg = document.createElement("p");
+  msg.className = "field-message";
+  msg.dataset.fieldMsgFor = input.id;
+  msg.setAttribute("aria-live", "polite");
+  msg.setAttribute("role", "status");
+  msg.hidden = true;
+
+  input.insertAdjacentElement("afterend", msg);
+  return msg;
+}
+
+function renderFieldFeedback(input, result, options = {}) {
+  const msg = ensureFieldMessage(input);
+  if (!msg) return;
+
+  const showHint = options.showHint && !result.error && result.normalized;
+  msg.textContent = result.error || (showHint ? `Se guardará como ${result.normalized}` : "");
+  msg.hidden = !(result.error || showHint);
+
+  msg.classList.toggle("field-message--error", Boolean(result.error));
+  msg.classList.toggle("field-message--hint", Boolean(showHint));
+  input?.classList?.toggle("input-error", Boolean(result.error));
+}
+
+function runFinanceValidation(section) {
+  const config = FINANCE_FIELD_RULES[section];
+  if (!config) return { hasError: false, values: {} };
+
+  const values = {};
+  let hasError = false;
+
+  for (const field of config.fields) {
+    const input = $(field.id);
+    const raw = input?.value ?? "";
+    let res;
+    if (field.kind === "amount") res = validatePositiveAmount(raw, field.label);
+    else if (field.kind === "date") res = validateDateInput(raw, field.label);
+    else res = validateRequiredText(raw, field.label);
+
+    renderFieldFeedback(input, res, { showHint: field.kind === "amount" });
+
+    if (res.error) hasError = true;
+    values[field.key] = field.kind === "amount" ? res.amount : res.value;
   }
-  return monto;
+
+  const submit = $(config.submitId);
+  if (submit) submit.disabled = hasError;
+
+  return { hasError, values };
+}
+
+function setupFinanceValidationListeners() {
+  Object.keys(FINANCE_FIELD_RULES).forEach((section) => {
+    const config = FINANCE_FIELD_RULES[section];
+    config.fields.forEach((field) => {
+      const input = $(field.id);
+      if (!input) return;
+      const handler = () => runFinanceValidation(section);
+      input.addEventListener("input", handler);
+      input.addEventListener("change", handler);
+      input.addEventListener("blur", handler);
+    });
+    runFinanceValidation(section);
+  });
 }
 
 /* ---------- Rendering ---------- */
@@ -1226,6 +1333,7 @@ function loadIngreso(id){
   $("inNotas").value=r.notas||"";
   $("addIngresoBtn").dataset.editId=id;
   $("addIngresoBtn").textContent="Actualizar ingreso";
+  runFinanceValidation("ingresos");
 }
 function clearIngresoForm(){
   ["inNombre","inConcepto","inMonto","inNotas"].forEach(id=>$(id).value="");
@@ -1234,6 +1342,7 @@ function clearIngresoForm(){
   $("inEstado").value="Pagado";
   delete $("addIngresoBtn").dataset.editId;
   $("addIngresoBtn").textContent="Guardar ingreso";
+  runFinanceValidation("ingresos");
 }
 function loadGasto(id){
   const r = (state.active.gastos || []).find(x => x.id === id);
@@ -1246,7 +1355,8 @@ function loadGasto(id){
   $("gaNotas").value     = r.notas || "";
 
   $("addGastoBtn").dataset.editId = id;
-$("addGastoBtn").textContent = "Actualizar egreso";
+  $("addGastoBtn").textContent = "Actualizar egreso";
+  runFinanceValidation("gastos");
 
 }
 
@@ -1255,6 +1365,7 @@ function clearGastoForm(){
   $("gaFecha").value=todayISO();
   delete $("addGastoBtn").dataset.editId;
   $("addGastoBtn").textContent="Guardar egreso";
+  runFinanceValidation("gastos");
 }
 function loadCxc(id){
   const r=(state.active.cxc||[]).find(x=>x.id===id); if(!r) return;
@@ -1266,6 +1377,7 @@ function loadCxc(id){
   $("cxcnotas").value=r.notas||"";
   $("addCxcBtn").dataset.editId=id;
   $("addCxcBtn").textContent="Actualizar";
+  runFinanceValidation("cxc");
 }
 function clearCxcForm(){
   ["cxcnombre","cxcconcepto","cxcmonto","cxcnotas"].forEach(id=>$(id).value="");
@@ -1273,6 +1385,7 @@ function clearCxcForm(){
   $("cxcestado").value="Pendiente";
   delete $("addCxcBtn").dataset.editId;
   $("addCxcBtn").textContent="Guardar";
+  runFinanceValidation("cxc");
 }
 function loadCxp(id){
   const r=(state.active.cxp||[]).find(x=>x.id===id); if(!r) return;
@@ -1284,6 +1397,7 @@ function loadCxp(id){
   $("cxpnotas").value=r.notas||"";
   $("addCxpBtn").dataset.editId=id;
   $("addCxpBtn").textContent="Actualizar";
+  runFinanceValidation("cxp");
 }
 function clearCxpForm(){
   ["cxpproveedor","cxpconcepto","cxpmonto","cxpnotas"].forEach(id=>$(id).value="");
@@ -1291,6 +1405,7 @@ function clearCxpForm(){
   $("cxpestado").value="Pendiente";
   delete $("addCxpBtn").dataset.editId;
   $("addCxpBtn").textContent="Guardar";
+  runFinanceValidation("cxp");
 }
 function editCxp(id) {
   startEdit("cxp", id);
@@ -1518,296 +1633,267 @@ window.renderResumen = renderResumen;
 
 /* ---------- Actions / Events ---------- */
 function wireActions(){
-    try {
-  // Global filters
-  $("monthFilter").addEventListener("change",(e)=>{
-    state.filters.month = e.target.value || monthISO();
-    renderDashboard();
-  });
-  $("searchAll").addEventListener("input",(e)=>{
-    state.filters.search = e.target.value || "";
-    renderDashboard();
-  });
+  try {
+    setupFinanceValidationListeners();
 
-  // Searches
-  $("ingSearch").addEventListener("input", renderIngresos);
-  $("gasSearch").addEventListener("input", renderGastos);
-  $("cxcSearch").addEventListener("input", rendercxc);
-  $("cxpSearch").addEventListener("input", renderCxp);
-  $("invSearch").addEventListener("input", renderInventario);
+    // Global filters
+    $("monthFilter").addEventListener("change", (e) => {
+      state.filters.month = e.target.value || monthISO();
+      renderDashboard();
+    });
+    $("searchAll").addEventListener("input", (e) => {
+      state.filters.search = e.target.value || "";
+      renderDashboard();
+    });
 
-  // Add / update
-  $("addIngresoBtn").addEventListener("click", async()=>{
-    const fecha = requireDateValue($("inFecha").value, "este ingreso");
-    const monto = requireMontoValue($("inMonto").value, "este ingreso");
-    const nombre = $("inNombre").value.trim();
-    const concepto = $("inConcepto").value.trim();
-    if (!fecha || monto === null) return;
-    if(!nombre || !concepto){ alert("Poné nombre y qué pagó."); return; }
-    const data={
-      id: $("addIngresoBtn").dataset.editId || uid(),
-      nombre,
-      fecha,
-      concepto,
-      monto,
-      medio: $("inMedio").value,
-      estado: $("inEstado").value,
-      notas: $("inNotas").value.trim()
-    };
-    upsert("ingresos", data, $("addIngresoBtn").dataset.editId);
-    await persistActive(); clearIngresoForm(); renderAll();
-  });
-  $("clearIngresoBtn").addEventListener("click", clearIngresoForm);
+    // Searches
+    $("ingSearch").addEventListener("input", renderIngresos);
+    $("gasSearch").addEventListener("input", renderGastos);
+    $("cxcSearch").addEventListener("input", rendercxc);
+    $("cxpSearch").addEventListener("input", renderCxp);
+    $("invSearch").addEventListener("input", renderInventario);
 
-  $("addGastoBtn").addEventListener("click", async () => {
-  const concepto  = $("gaConcepto").value.trim();
-  const fechaIn   = $("gaFecha").value.trim();     // 👈 no default acá
-  const monto     = requireMontoValue($("gaMonto").value, "este egreso");
-  const categoria = $("gaCategoria").value.trim();
-  const notas     = $("gaNotas").value.trim();
-  if (monto === null) return;
-  if (!concepto) return alert("Poné qué pagaste.");
+    // Add / update
+    $("addIngresoBtn").addEventListener("click", async()=>{
+      const { hasError, values } = runFinanceValidation("ingresos");
+      if (hasError) return;
+      const data={
+        id: $("addIngresoBtn").dataset.editId || uid(),
+        nombre: values.nombre || "",
+        fecha: values.fecha || todayISO(),
+        concepto: values.concepto || "",
+        monto: values.monto ?? 0,
+        medio: $("inMedio").value,
+        estado: $("inEstado").value,
+        notas: $("inNotas").value.trim()
+      };
+      upsert("ingresos", data, $("addIngresoBtn").dataset.editId);
+      await persistActive(); clearIngresoForm(); renderAll();
+    });
+    $("clearIngresoBtn").addEventListener("click", clearIngresoForm);
 
-  const btn = $("addGastoBtn");
-  const editId = btn.dataset.editId || null;
+    $("addGastoBtn").addEventListener("click", async () => {
+      const categoria = $("gaCategoria").value.trim();
+      const notas     = $("gaNotas").value.trim();
+      const { hasError, values } = runFinanceValidation("gastos");
+      if (hasError) return;
 
-  const active = getActive();
-  active.gastos ??= [];
-  const prev = editId ? active.gastos.find(g => g.id === editId) : null;
-  const fechaValid = fechaIn ? requireDateValue(fechaIn, "este egreso") : (prev?.fecha || "");
-  if (!fechaValid) return alert("Ingresá la fecha de este egreso.");
+      const btn = $("addGastoBtn");
+      const editId = btn.dataset.editId || null;
 
-  if (editId) {
-    // ✏️ EDITAR: mantener fecha previa si el input quedó vacío
-    if (!prev) return alert("No encontré ese egreso para editar.");
+      const active = getActive();
+      active.gastos ??= [];
+      const prev = editId ? active.gastos.find(g => g.id === editId) : null;
 
-    const updated = {
-      ...prev,
-      concepto,
-      fecha: fechaValid || prev.fecha || todayISO(),
-      monto,
-      categoria,
-      notas
-    };
+      const payload = {
+        concepto: values.concepto || "",
+        fecha: values.fecha || todayISO(),
+        monto: values.monto ?? 0,
+        categoria,
+        notas
+      };
 
-    active.gastos = active.gastos.map(g => (g.id === editId ? updated : g));
+      if (editId) {
+        if (!prev) return alert("No encontré ese egreso para editar.");
 
-    // salir del modo edición
-    delete btn.dataset.editId;
-    btn.textContent = "Agregar egreso";
+        active.gastos = active.gastos.map(g => (g.id === editId ? { ...g, ...payload } : g));
 
-  } else {
-    // ➕ NUEVO
-    const item = {
-      id: uid(),
-      concepto,
-      fecha: fechaValid || todayISO(),
-      monto,
-      categoria,
-      notas
-    };
+        // salir del modo edición
+        delete btn.dataset.editId;
+        btn.textContent = "Agregar egreso";
 
-    active.gastos.push(item);
-  }
+      } else {
+        active.gastos.push({ id: uid(), ...payload });
+      }
 
-  setActive(active);
-  state.active = active;
-  await persistActive(active);
+      setActive(active);
+      state.active = active;
+      await persistActive(active);
 
-  clearGastoForm();
-  renderAll();
-});
+      clearGastoForm();
+      renderAll();
+    });
 
+    const btnClearGasto = $("clearGastoBtn");
+    if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
 
+    const btnClearCxc = $("clearCxcBtn");
+    if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
 
-const btnClearGasto = $("clearGastoBtn");
-if (btnClearGasto) btnClearGasto.addEventListener("click", clearGastoForm);
+    const btnAddCxc = $("addCxcBtn");
+    if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
+      const { hasError, values } = runFinanceValidation("cxc");
+      if (hasError) return;
 
+      const data = {
+        id: btnAddCxc.dataset.editId || uid(),
+        nombre: values.nombre || "",
+        vence: values.vence || todayISO(),
+        concepto: values.concepto || "",
+        monto: values.monto ?? 0,
+        estado: $("cxcestado").value || "Pendiente",
+        notas: $("cxcnotas").value.trim()
+      };
 
-const btnClearCxc = $("clearCxcBtn");
-if (btnClearCxc) btnClearCxc.addEventListener("click", clearCxcForm);
+      upsert("cxc", data, btnAddCxc.dataset.editId);
+      await persistActive();
+      clearCxcForm();
+      renderAll();
+      showSoftBanner("✅ Cuenta agregada");
+    });
 
-const btnAddCxc = $("addCxcBtn");
-if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
-  const monto = requireMontoValue($("cxcmonto").value, "esta cuenta por cobrar");
-  const vence = requireDateValue($("cxcvence").value, "esta cuenta por cobrar");
-  const data = {
-    id: btnAddCxc.dataset.editId || uid(),
-    nombre: $("cxcnombre").value.trim(),
-    vence,
-    concepto: $("cxcconcepto").value.trim(),
-    monto,
-    estado: $("cxcestado").value || "Pendiente",
-    notas: $("cxcnotas").value.trim()
-  };
+    const btnAddCxp = $("addCxpBtn");
+    if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 
+      const { hasError, values } = runFinanceValidation("cxp");
+      if (hasError) return;
 
-  if (!vence || monto === null) return;
-  if (!data.nombre) { alert("Poné el alumno/cliente."); return; }
-  if (!data.concepto) { alert("Poné el concepto."); return; }
+      const data={
+        id: $("addCxpBtn").dataset.editId || uid(),
+        proveedor: values.proveedor || "",
+        vence: values.vence || todayISO(),
+        concepto: values.concepto || "",
+        monto: values.monto ?? 0,
+        estado: $("cxpestado").value,
+        notas: $("cxpnotas").value.trim()
+      };
+      const isPaid = String(data.estado || "").toLowerCase() === "pagado";
+      if (isPaid) data.pagadoEn = data.pagadoEn || todayISO();
+      upsert("cxp", data, $("addCxpBtn").dataset.editId);
+      const active = state.active || getActive();
+      const saved = (active.cxp || []).find(c => c.id === data.id);
+      syncCxpExpense(active, saved);
+      state.active = active;
+      await persistActive(active); clearCxpForm(); renderAll();
+      showSoftBanner("✅ Cuenta agregada");
+    });
+    $("clearCxpBtn").addEventListener("click", clearCxpForm);
 
-  upsert("cxc", data, btnAddCxc.dataset.editId);
-  await persistActive();
-  clearCxcForm();
-  renderAll();
-  showSoftBanner("✅ Cuenta agregada");
-});
+    $("saveInvBtn").addEventListener("click", async()=>{
+      const data={
+        id: $("saveInvBtn").dataset.editId || uid(),
+        categoria: $("invCategoria").value.trim(),
+        producto: $("invProducto").value.trim(),
+        stock: Number($("invStock").value||0),
+        minimo: Number($("invMin").value||0),
+        costo: $("invCosto").value ? Number($("invCosto").value) : null
+      };
+      if(!data.categoria || !data.producto){ alert("Poné categoría y producto."); return; }
+      upsert("inventario", data, $("saveInvBtn").dataset.editId);
+      await persistActive(); clearInvForm(); renderAll();
+      showSoftBanner("✅ Producto guardado");
+    });
+    $("clearInvBtn").addEventListener("click", clearInvForm);
 
-const btnAddCxp = $("addCxpBtn");
-if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{ 
-    const monto = requireMontoValue($("cxpmonto").value, "esta cuenta por pagar");
-    const vence = requireDateValue($("cxpvence").value, "esta cuenta por pagar");
-    if (monto === null || !vence) return;
+    // Plantillas
+    $("createTplBtn").addEventListener("click", async()=>{
+      const name = $("tplName").value.trim() || monthISO();
+      if(state.templates.some(t=>t.name===name)){ alert("Ya existe una plantilla con ese nombre."); return; }
+      const t=emptyTemplate(name);
+      await dbPut("templates", t);
+      state.templates = sortTemplates(await dbGetAll("templates"));
+      setActiveTemplate(t.id);
+      $("tplName").value="";
+      refreshTemplateSelectors();
+    });
+    $("cloneTplBtn").addEventListener("click", async () => {
+      const fromId = $("tplCloneFrom").value;
+      const name = $("tplName").value.trim() || monthISO();
 
-    const data={
-      id: $("addCxpBtn").dataset.editId || uid(),
-      proveedor: $("cxpproveedor").value.trim(),
-      vence,
-      concepto: $("cxpconcepto").value.trim(),
-      monto,
-      estado: $("cxpestado").value,
-      notas: $("cxpnotas").value.trim()
-    };
-    const isPaid = String(data.estado || "").toLowerCase() === "pagado";
-    if (isPaid) data.pagadoEn = data.pagadoEn || todayISO();
-    if(!data.proveedor){ alert("Poné el proveedor."); return; }
-    if(!data.concepto){ alert("Poné el concepto."); return; }
-    upsert("cxp", data, $("addCxpBtn").dataset.editId);
-    const active = state.active || getActive();
-    const saved = (active.cxp || []).find(c => c.id === data.id);
-    syncCxpExpense(active, saved);
-    state.active = active;
-    await persistActive(active); clearCxpForm(); renderAll();
-    showSoftBanner("✅ Cuenta agregada");
-  });
-  $("clearCxpBtn").addEventListener("click", clearCxpForm);
+      if (!fromId) { alert("Elegí una plantilla para copiar."); return; }
+      if (state.templates.some(t => t.name === name)) { alert("Ya existe ese nombre."); return; }
 
-  $("saveInvBtn").addEventListener("click", async()=>{
-    const data={
-      id: $("saveInvBtn").dataset.editId || uid(),
-      categoria: $("invCategoria").value.trim(),
-      producto: $("invProducto").value.trim(),
-      stock: Number($("invStock").value||0),
-      minimo: Number($("invMin").value||0),
-      costo: $("invCosto").value ? Number($("invCosto").value) : null
-    };
-    if(!data.categoria || !data.producto){ alert("Poné categoría y producto."); return; }
-    upsert("inventario", data, $("saveInvBtn").dataset.editId);
-    await persistActive(); clearInvForm(); renderAll();
-    showSoftBanner("✅ Producto guardado");
-  });
-  $("clearInvBtn").addEventListener("click", clearInvForm);
+      // 1) crear nueva plantilla (solo meta) en IndexedDB
+      const newTpl = emptyTemplate(name);
+      await dbPut("templates", newTpl);
 
-  // Plantillas
-  $("createTplBtn").addEventListener("click", async()=>{
-    const name = $("tplName").value.trim() || monthISO();
-    if(state.templates.some(t=>t.name===name)){ alert("Ya existe una plantilla con ese nombre."); return; }
-    const t=emptyTemplate(name);
-    await dbPut("templates", t);
-    state.templates = sortTemplates(await dbGetAll("templates"));
-    setActiveTemplate(t.id);
-    $("tplName").value="";
-    refreshTemplateSelectors();
-  });
-  $("cloneTplBtn").addEventListener("click", async () => {
-  const fromId = $("tplCloneFrom").value;
-  const name = $("tplName").value.trim() || monthISO();
+      // 2) leer datos reales de la plantilla origen (desde xa_store_v1 usando el ID)
+      setActiveId(fromId);
+      const baseData = getActive();
 
-  if (!fromId) { alert("Elegí una plantilla para copiar."); return; }
-  if (state.templates.some(t => t.name === name)) { alert("Ya existe ese nombre."); return; }
+      // 3) armar data del nuevo mes
+      const monthData = {
+        alumnos: (baseData.alumnos || []).map(a => ({ ...a })),          // copiamos alumnos
+        inventario: (baseData.inventario || []).map(i => ({ ...i })),   // opcional (dejalo si querés)
+        ingresos: [],
+        gastos: [],
+        pagos: [],
+        asistencia: [],
+        cxc: [],
+        cxp: [] // si querés arrancar el mes con cxp vacío, dejalo así
+      };
 
-  // 1) crear nueva plantilla (solo meta) en IndexedDB
-  const newTpl = emptyTemplate(name);
-  await dbPut("templates", newTpl);
+      // 4) generar CxC nuevas para TODOS los alumnos
+      for (const a of monthData.alumnos) {
+        addCuotaPendiente(monthData, a);
+      }
 
-  // 2) leer datos reales de la plantilla origen (desde xa_store_v1 usando el ID)
-  setActiveId(fromId);
-  const baseData = getActive();
+      // 5) guardar data del nuevo mes en xa_store_v1 bajo el id de la NUEVA plantilla
+      setActiveId(newTpl.id);
+      saveActiveData(monthData);
 
-  // 3) armar data del nuevo mes
-  const monthData = {
-    alumnos: (baseData.alumnos || []).map(a => ({ ...a })),          // copiamos alumnos
-    inventario: (baseData.inventario || []).map(i => ({ ...i })),   // opcional (dejalo si querés)
-    ingresos: [],
-    gastos: [],
-    pagos: [],
-    asistencia: [],
-    cxc: [],
-    cxp: [] // si querés arrancar el mes con cxp vacío, dejalo así
-  };
+      // 6) recargar lista de plantillas y activar la nueva
+      state.templates = sortTemplates(await dbGetAll("templates"));
+      refreshTemplateSelectors();
+      setActiveTemplate(newTpl.id);
 
-  // 4) generar CxC nuevas para TODOS los alumnos
-  for (const a of monthData.alumnos) {
-    addCuotaPendiente(monthData, a);
-  }
+      $("tplName").value = "";
+    });
 
-  // 5) guardar data del nuevo mes en xa_store_v1 bajo el id de la NUEVA plantilla
-  setActiveId(newTpl.id);
-  saveActiveData(monthData);
+    $("tplActive").addEventListener("change",(e)=>setActiveTemplate(e.target.value));
 
-  // 6) recargar lista de plantillas y activar la nueva
-  state.templates = sortTemplates(await dbGetAll("templates"));
-  refreshTemplateSelectors();
-  setActiveTemplate(newTpl.id);
+    $("deleteTplBtn").addEventListener("click", async()=>{
+      if(state.templates.length<=1){ alert("Tenés que dejar al menos una plantilla."); return; }
+      const activeId = state.activeTemplateId;
+      const tplMeta = state.templates.find(t => t.id === activeId) || state.active;
+      const tplName = tplMeta?.name || "esta plantilla";
 
-  $("tplName").value = "";
-});
+      if(!confirm(`¿Borrar la plantilla "${tplName}"? (No se puede deshacer)`)) return;
 
+      await dbDelete("templates", activeId);
 
-  $("tplActive").addEventListener("change",(e)=>setActiveTemplate(e.target.value));
+      // limpiar datos locales asociados en localStorage
+      const store = xaLoad();
+      if (store && Object.prototype.hasOwnProperty.call(store, activeId)) {
+        delete store[activeId];
+        xaSave(store);
+      }
 
-  $("deleteTplBtn").addEventListener("click", async()=>{
-    if(state.templates.length<=1){ alert("Tenés que dejar al menos una plantilla."); return; }
-    const activeId = state.activeTemplateId;
-    const tplMeta = state.templates.find(t => t.id === activeId) || state.active;
-    const tplName = tplMeta?.name || "esta plantilla";
+      state.templates = sortTemplates(await dbGetAll("templates"));
+      const next = state.templates[state.templates.length-1];
+      if (next) setActiveTemplate(next.id);
+    });
 
-    if(!confirm(`¿Borrar la plantilla "${tplName}"? (No se puede deshacer)`)) return;
+    // Export/Import backups
+    $("exportBackupBtn").addEventListener("click", exportBackup);
+    $("importBackupBtn").addEventListener("click", ()=> $("filePicker").click());
+    $("filePicker").addEventListener("change", importBackup);
 
-    await dbDelete("templates", activeId);
+    // CSV exports
+    const b1 = $("exportIngresosCsvBtn"); if (b1) b1.addEventListener("click", () => exportCSV("ingresos"));
+    const b2 = $("exportGastosCsvBtn");   if (b2) b2.addEventListener("click", () => exportCSV("gastos"));
+    const b3 = $("exportCxcCsvBtn");      if (b3) b3.addEventListener("click", () => exportCSV("cxc"));
+    const b4 = $("exportCxpCsvBtn");      if (b4) b4.addEventListener("click", () => exportCSV("cxp"));
+    const b5 = $("exportInvCsvBtn");      if (b5) b5.addEventListener("click", () => exportCSV("inventario"));
+    const b6 = $("exportCsvAllBtn");      if (b6) b6.addEventListener("click", exportAllZip);
 
-    // limpiar datos locales asociados en localStorage
-    const store = xaLoad();
-    if (store && Object.prototype.hasOwnProperty.call(store, activeId)) {
-      delete store[activeId];
-      xaSave(store);
+    // ===== ALUMNOS =====
+    const btnAddA = $("addAlumnoBtn");
+    if (btnAddA) btnAddA.addEventListener("click", addOrUpdateAlumno);
+
+    const btnClrA = $("clearAlumnoBtn");
+    if (btnClrA) btnClrA.addEventListener("click", clearAlumnoForm);
+
+    const sA = $("alSearch");
+    if (sA) sA.addEventListener("input", renderAlumnos);
+
+    const nac = $("alNacimiento");
+    if (nac) {
+      nac.addEventListener("change", ()=>{
+        const edad = $("alEdad");
+        if (edad) edad.value = calcAge(nac.value);
+      });
     }
-
-    state.templates = sortTemplates(await dbGetAll("templates"));
-    const next = state.templates[state.templates.length-1];
-    if (next) setActiveTemplate(next.id);
-  });
-
-  // Export/Import backups
-  $("exportBackupBtn").addEventListener("click", exportBackup);
-  $("importBackupBtn").addEventListener("click", ()=> $("filePicker").click());
-  $("filePicker").addEventListener("change", importBackup);
-
-  // CSV exports
-  const b1 = $("exportIngresosCsvBtn"); if (b1) b1.addEventListener("click", () => exportCSV("ingresos"));
-const b2 = $("exportGastosCsvBtn");   if (b2) b2.addEventListener("click", () => exportCSV("gastos"));
-const b3 = $("exportCxcCsvBtn");      if (b3) b3.addEventListener("click", () => exportCSV("cxc"));
-const b4 = $("exportCxpCsvBtn");      if (b4) b4.addEventListener("click", () => exportCSV("cxp"));
-const b5 = $("exportInvCsvBtn");      if (b5) b5.addEventListener("click", () => exportCSV("inventario"));
-const b6 = $("exportCsvAllBtn");      if (b6) b6.addEventListener("click", exportAllZip);
-
-  // ===== ALUMNOS =====
-const btnAddA = $("addAlumnoBtn");
-if (btnAddA) btnAddA.addEventListener("click", addOrUpdateAlumno);
-
-const btnClrA = $("clearAlumnoBtn");
-if (btnClrA) btnClrA.addEventListener("click", clearAlumnoForm);
-
-const sA = $("alSearch");
-if (sA) sA.addEventListener("input", renderAlumnos);
-
-const nac = $("alNacimiento");
-if (nac) {
-  nac.addEventListener("change", ()=>{
-    const edad = $("alEdad");
-    if (edad) edad.value = calcAge(nac.value);
-  });
-}
-    } catch (err) {
+  } catch (err) {
     log.error("wireActions error:", err);
     alert("Error interno en la app. Revisá consola.");
   }

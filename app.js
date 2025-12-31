@@ -2120,6 +2120,7 @@ function saveAlumno(id) {
 
   editMode = { section: null, id: null };
   render();
+  showSoftBanner("✅ Alumno guardado");
 }
 
 // Si usás onclick="..." en HTML, esto asegura que existan
@@ -2224,6 +2225,7 @@ if (typeof renderResumen === "function") renderResumen();
 
 clearAlumnoForm();
 renderAlumnos();
+showSoftBanner("✅ Alumno guardado");
 
 
 }

@@ -1327,6 +1327,7 @@ function saveCxp(id) {
   persistActive(active);
   editMode = { section: null, id: null };
   render();
+  showSoftBanner("✅ Cuenta agregada");
 }
 window.editCxp = editCxp;
 window.saveCxp = saveCxp;
@@ -1647,6 +1648,7 @@ if (btnAddCxc) btnAddCxc.addEventListener("click", async () => {
   await persistActive();
   clearCxcForm();
   renderAll();
+  showSoftBanner("✅ Cuenta agregada");
 });
 
 const btnAddCxp = $("addCxpBtn");
@@ -1674,6 +1676,7 @@ if (btnAddCxp) btnAddCxp.addEventListener("click", async()=>{
     syncCxpExpense(active, saved);
     state.active = active;
     await persistActive(active); clearCxpForm(); renderAll();
+    showSoftBanner("✅ Cuenta agregada");
   });
   $("clearCxpBtn").addEventListener("click", clearCxpForm);
 

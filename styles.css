@@ -5,8 +5,8 @@
   --shadow: 0 10px 30px rgba(0,0,0,.35);
   --radius: 14px;
   --pad: 14px;
-  --focus:#f9d65c;
-  --focus-ring: 0 0 0 3px rgba(249,214,92,.25);
+  --focus:#b4565c;
+  --focus-ring: 0 0 0 3px rgba(180,86,92,.3);
   font-synthesis-weight: none;
 }
 *{box-sizing:border-box;}
@@ -291,7 +291,7 @@ footer{
 .app-alert{
   background: rgba(255,255,255,.12);
   border:1px solid var(--border);
-  border-left:4px solid #f9d65c;
+  border-left:4px solid var(--focus);
   color:var(--text);
   padding:10px 12px;
   border-radius: 12px;

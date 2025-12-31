@@ -27,7 +27,7 @@
     <p id="directorySearchFeedback" class="directory-search-feedback small" aria-live="polite" aria-atomic="true"></p>
     <div class="directory-toggle-wrap">
       <button type="button" id="directoryToggle" class="ghost directory-toggle" aria-expanded="false" aria-controls="directoryMenu">Dirección general</button>
-      <nav id="directoryMenu" class="section-links" role="navigation" aria-label="Navegación de secciones académicas">
+      <nav id="directoryMenu" class="section-links" role="tablist" aria-label="Navegación de secciones académicas">
         <button type="button" data-directory-target="clases" aria-controls="directoryPanel">Clases</button>
         <button type="button" data-directory-target="profes" aria-controls="directoryPanel">Profes</button>
         <button type="button" data-directory-target="alumnos" aria-controls="directoryPanel">Alumnos</button>
@@ -788,7 +788,7 @@ if (searchInput) {
 
 const directoryPanel = document.getElementById("directoryPanel");
 const financePanel = document.getElementById("financePanel");
-const directoryButtons = Array.from(document.querySelectorAll("[data-directory-target]"));
+const directoryButtons = Array.from(document.querySelectorAll("[data-directory-target], #backToFinanceBtn"));
 const backToFinanceBtn = document.getElementById("backToFinanceBtn");
 const directoryToggle = document.getElementById("directoryToggle");
 const DIRECTORY_STORE_KEY = "xa_directory_v1";
@@ -796,6 +796,7 @@ const DIRECTORY_AUTH_KEY = "xa_directory_auth_ok";
 const DIRECTORY_PASSWORD = "frente1234";
 let directoryUnlocked = false;
 let authPromptOpen = false;
+let directoryMenuOpen = false;
 
 let directoryState = {
   clases: [
@@ -838,19 +839,27 @@ function saveDirectoryState() {
 loadDirectoryState();
 
 function setActiveDirectoryButton(targetId) {
+  let matched = false;
   directoryButtons.forEach((btn) => {
     const isActive = btn.dataset.directoryTarget === targetId;
     btn.classList.toggle("active", isActive);
-    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    btn.tabIndex = isActive ? 0 : -1;
+    matched = matched || isActive;
   });
+
+  if (!matched && directoryButtons[0]) {
+    directoryButtons[0].tabIndex = 0;
+  }
 }
 
 function setDirectoryMenu(open) {
+  directoryMenuOpen = !!open;
   if (directoryToggle) {
-    directoryToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    directoryToggle.setAttribute("aria-expanded", directoryMenuOpen ? "true" : "false");
   }
   if (bodyEl) {
-    bodyEl.classList.toggle("directory-menu-open", open);
+    bodyEl.classList.toggle("directory-menu-open", directoryMenuOpen);
   }
 }
 
@@ -884,10 +893,43 @@ function showFinance() {
 }
 
 directoryButtons.forEach((btn) => {
+  btn.setAttribute("role", "tab");
+  btn.setAttribute("aria-selected", "false");
+  btn.tabIndex = -1;
+  if (!btn.getAttribute("aria-controls") && btn.id === "backToFinanceBtn" && financePanel) {
+    btn.setAttribute("aria-controls", financePanel.id);
+  }
   btn.addEventListener("click", async () => {
     const targetId = btn.dataset.directoryTarget;
-    const opened = await showDirectory(targetId);
-    if (opened) renderDirectorySearch();
+    if (targetId) {
+      const opened = await showDirectory(targetId);
+      if (opened) renderDirectorySearch();
+    } else if (btn.id === "backToFinanceBtn") {
+      showFinance();
+    }
+  });
+});
+
+function focusDirectoryButton(targetIndex) {
+  const btn = directoryButtons[targetIndex];
+  if (!btn) return;
+  btn.focus();
+  btn.click();
+}
+
+directoryButtons.forEach((btn, index) => {
+  btn.addEventListener("keydown", (event) => {
+    const keys = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Home", "End"];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+
+    const total = directoryButtons.length;
+    let next = index;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % total;
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + total) % total;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = total - 1;
+    focusDirectoryButton(next);
   });
 });
 
@@ -895,14 +937,16 @@ if (directoryToggle) {
   directoryToggle.addEventListener("click", async () => {
     const ok = await ensureDirectoryAccess();
     if (!ok) return;
-    const isOpen = bodyEl.classList.contains("directory-menu-open");
-    setDirectoryMenu(!isOpen);
+    setDirectoryMenu(!directoryMenuOpen);
   });
 }
 
-if (backToFinanceBtn) {
-  backToFinanceBtn.addEventListener("click", showFinance);
-}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && directoryMenuOpen) {
+    setDirectoryMenu(false);
+    directoryToggle?.focus();
+  }
+});
 
 // Start in vista finanzas
 showFinance();
